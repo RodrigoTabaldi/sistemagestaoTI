@@ -1,0 +1,249 @@
+@model ListagemMovimentacoesViewModel
+@{
+    ViewData["Titulo"] = "Movimentações";
+    ViewData["Subtitulo"] = $"{Model.TotalEmAberto} termo(s) em aberto";
+    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+}
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1><svg viewBox="0 0 24 24" width="24" height="24" class="texto-marca"><use href="#i-troca" /></svg> Movimentações de ativos</h1>
+        <p>Histórico completo de retiradas e devoluções, com termo de responsabilidade por operação.</p>
+    </div>
+    <div class="cabecalho-pagina__acoes">
+        <a class="btn btn--contorno" asp-controller="Relatorios" asp-action="Movimentacoes"
+           asp-all-route-data="@Context.Request.Query.ToDictionary(q => q.Key, q => q.Value.ToString())">
+            <svg viewBox="0 0 24 24"><use href="#i-download" /></svg> Exportar CSV
+        </a>
+        @if (podeOperar)
+        {
+            <a class="btn btn--primario" asp-action="Entregar">
+                <svg viewBox="0 0 24 24"><use href="#i-saida" /></svg> Registrar entrega
+            </a>
+        }
+    </div>
+</div>
+
+<div class="grade-kpi mb-4">
+    <article class="kpi" style="--kpi-cor:var(--marca-vinho)">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-troca" /></svg></span>
+            <span class="kpi__rotulo">Em posse de colaboradores</span>
+        </div>
+        <div class="kpi__valor" data-contador="@Model.TotalEmAberto">0</div>
+        <div class="kpi__nota">termos ainda não devolvidos</div>
+    </article>
+
+    <article class="kpi" style="--kpi-cor:var(--cor-perigo)">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-alerta" /></svg></span>
+            <span class="kpi__rotulo">Devoluções em atraso</span>
+        </div>
+        <div class="kpi__valor" data-contador="@Model.TotalAtrasadas">0</div>
+        <div class="kpi__nota">
+            @if (Model.TotalAtrasadas > 0)
+            {
+                <a asp-action="Index" asp-route-SomenteAtrasadas="true">ver somente atrasadas</a>
+            }
+            else
+            {
+                <span class="texto-sucesso">tudo dentro do prazo</span>
+            }
+        </div>
+    </article>
+
+    <article class="kpi" style="--kpi-cor:var(--cor-info)">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-relatorio" /></svg></span>
+            <span class="kpi__rotulo">Registros no filtro atual</span>
+        </div>
+        <div class="kpi__valor" data-contador="@Model.Pagina.TotalItens">0</div>
+        <div class="kpi__nota">movimentações listadas</div>
+    </article>
+</div>
+
+<form method="get" class="cartao painel-filtros" data-filtro-auto>
+    <div class="cartao__corpo cartao__corpo--compacto painel-filtros__topo">
+        <label class="busca">
+            <svg viewBox="0 0 24 24"><use href="#i-busca" /></svg>
+            <input class="entrada" type="search" name="Busca" value="@Model.Filtro.Busca"
+                   placeholder="Buscar por protocolo, patrimônio, série, colaborador ou matrícula…"
+                   data-busca-instantanea aria-label="Buscar movimentações" />
+        </label>
+
+        <select class="entrada" name="Status" style="width:auto"
+                asp-items='ListaDeEnum<StatusMovimentacao>(Model.Filtro.Status, "Todas as situações")'></select>
+
+        <select class="entrada" name="Tipo" style="width:auto"
+                asp-items='ListaDeEnum<TipoMovimentacao>(Model.Filtro.Tipo, "Todos os tipos")'></select>
+
+        <button type="button" class="btn btn--contorno" data-acao="alternar-filtros" data-alvo="filtros-movimentacao">
+            <svg viewBox="0 0 24 24"><use href="#i-filtro" /></svg> Mais filtros
+        </button>
+
+        @if (Model.Filtro.PossuiFiltroAtivo)
+        {
+            <a class="btn btn--fantasma" asp-action="Index">Limpar</a>
+        }
+    </div>
+
+    <div class="cartao__corpo cartao__corpo--compacto painel-filtros__corpo" id="filtros-movimentacao"
+         hidden="@(!Model.Filtro.PossuiFiltroAtivo)">
+        <div class="campo">
+            <label>Colaborador</label>
+            <select class="entrada" name="ColaboradorId" asp-items="Model.Listas.Colaboradores">
+                <option value="">Todos</option>
+            </select>
+        </div>
+        <div class="campo">
+            <label>Retirada a partir de</label>
+            <input class="entrada" type="date" name="DataInicial" value="@Model.Filtro.DataInicial?.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="campo">
+            <label>Retirada até</label>
+            <input class="entrada" type="date" name="DataFinal" value="@Model.Filtro.DataFinal?.ToString("yyyy-MM-dd")" />
+        </div>
+        <div class="campo">
+            <label>Ordenação</label>
+            <select class="entrada" name="Ordenacao">
+                <option value="">Retiradas mais recentes</option>
+                <option value="antigas" selected="@(Model.Filtro.Ordenacao == "antigas")">Mais antigas</option>
+                <option value="previsao" selected="@(Model.Filtro.Ordenacao == "previsao")">Previsão de devolução</option>
+                <option value="colaborador" selected="@(Model.Filtro.Ordenacao == "colaborador")">Colaborador</option>
+                <option value="ativo" selected="@(Model.Filtro.Ordenacao == "ativo")">Patrimônio</option>
+            </select>
+        </div>
+        <div class="campo" style="justify-content:flex-end">
+            <label class="caixa-marcacao">
+                <input type="checkbox" name="SomenteAtrasadas" value="true" checked="@Model.Filtro.SomenteAtrasadas" />
+                <span>Somente devoluções em atraso</span>
+            </label>
+        </div>
+    </div>
+</form>
+
+<section class="cartao">
+    @if (Model.Pagina.TotalItens == 0)
+    {
+        <div class="vazio">
+            <svg viewBox="0 0 24 24"><use href="#i-troca" /></svg>
+            <h3>Nenhuma movimentação encontrada</h3>
+            <p>
+                @(Model.Filtro.PossuiFiltroAtivo
+                    ? "Nenhum termo corresponde aos filtros aplicados."
+                    : "Registre a primeira entrega de equipamento a um colaborador.")
+            </p>
+            @if (podeOperar)
+            {
+                <a class="btn btn--primario btn--pequeno" asp-action="Entregar">Registrar entrega</a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="tabela-wrapper">
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Protocolo</th><th>Equipamento</th><th>Colaborador</th>
+                        <th>Retirada</th><th>Devolução</th><th>Situação</th><th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var movimentacao in Model.Pagina.Itens)
+                    {
+                        <tr>
+                            <td>
+                                <a class="mono pequeno negrito" asp-action="Detalhes" asp-route-id="@movimentacao.Id">
+                                    @movimentacao.Protocolo
+                                </a>
+                                <div class="minusculo texto-tenue">@movimentacao.Tipo.ObterNome()</div>
+                            </td>
+                            <td>
+                                <a class="celula-principal" asp-controller="Ativos" asp-action="Detalhes"
+                                   asp-route-id="@movimentacao.AtivoId">
+                                    <span class="icone-tipo">
+                                        <svg viewBox="0 0 24 24">
+                                            <use href="#@("i-" + IconeTipoAtivo(movimentacao.Ativo?.Tipo ?? TipoAtivo.Outro))" />
+                                        </svg>
+                                    </span>
+                                    <span class="truncar">
+                                        <strong>@movimentacao.Ativo?.DescricaoCurta</strong>
+                                        <small class="mono">@movimentacao.Ativo?.Patrimonio</small>
+                                    </span>
+                                </a>
+                            </td>
+                            <td>
+                                <a class="celula-principal" asp-controller="Colaboradores" asp-action="Detalhes"
+                                   asp-route-id="@movimentacao.ColaboradorId">
+                                    <span class="avatar avatar--pequeno"
+                                          style="background:@CorAvatar(movimentacao.Colaborador?.NomeCompleto)">
+                                        @movimentacao.Colaborador?.Iniciais
+                                    </span>
+                                    <span class="truncar pequeno">
+                                        @movimentacao.Colaborador?.NomeCompleto
+                                        <small>@movimentacao.Colaborador?.Departamento?.Nome</small>
+                                    </span>
+                                </a>
+                            </td>
+                            <td class="pequeno">
+                                @movimentacao.DataRetirada.ToString("dd/MM/yyyy")
+                                <div class="minusculo texto-tenue">@movimentacao.DataRetirada.ToString("HH:mm")</div>
+                            </td>
+                            <td class="pequeno">
+                                @if (movimentacao.DataDevolucao.HasValue)
+                                {
+                                    @movimentacao.DataDevolucao.Value.ToString("dd/MM/yyyy")
+                                    <div class="minusculo texto-tenue">@movimentacao.DiasEmPosse dia(s) em posse</div>
+                                }
+                                else if (movimentacao.DataPrevistaDevolucao.HasValue)
+                                {
+                                    <span class="texto-suave">previsto @movimentacao.DataPrevistaDevolucao.Value.ToString("dd/MM")</span>
+                                    @if (movimentacao.EstaAtrasada)
+                                    {
+                                        <div class="minusculo texto-perigo negrito">@movimentacao.DiasDeAtraso d de atraso</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="texto-tenue">indeterminado</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="selo selo--@ClasseStatusMovimentacao(movimentacao.Status)">
+                                    @movimentacao.Status.ObterNome()
+                                </span>
+                                @if (movimentacao.ComAvaria)
+                                {
+                                    <div class="minusculo texto-perigo mt-1">devolvido com avaria</div>
+                                }
+                            </td>
+                            <td>
+                                <div class="acoes-linha">
+                                    <a class="btn btn--fantasma btn--icone btn--pequeno" title="Detalhes"
+                                       asp-action="Detalhes" asp-route-id="@movimentacao.Id">
+                                        <svg viewBox="0 0 24 24"><use href="#i-olho" /></svg>
+                                    </a>
+                                    <a class="btn btn--fantasma btn--icone btn--pequeno" title="Termo de responsabilidade"
+                                       asp-action="Termo" asp-route-id="@movimentacao.Id">
+                                        <svg viewBox="0 0 24 24"><use href="#i-impressao" /></svg>
+                                    </a>
+                                    @if (podeOperar && movimentacao.EstaEmAberto)
+                                    {
+                                        <a class="btn btn--suave btn--pequeno" asp-action="Devolver" asp-route-id="@movimentacao.Id">
+                                            Devolver
+                                        </a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="cartao__rodape">
+            <partial name="_Paginacao" model="PaginacaoModel.De(Model.Pagina)" />
+        </div>
+    }
+</section>

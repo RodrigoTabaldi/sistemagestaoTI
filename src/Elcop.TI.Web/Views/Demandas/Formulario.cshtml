@@ -1,0 +1,171 @@
+@model DemandaFormViewModel
+@{
+    ViewData["Titulo"] = Model.Titulo;
+    ViewData["Subtitulo"] = Model.Edicao ? Model.Demanda.Titulo : "Registro de nova demanda de TI";
+}
+
+<div class="migalhas">
+    <a asp-action="Index">Demandas</a> <span>/</span> <span>@Model.Titulo</span>
+</div>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>@Model.Titulo</h1>
+        <p>Quanto mais completo o registro, mais fácil retomar o atendimento depois. O prazo é sugerido pela prioridade.</p>
+    </div>
+</div>
+
+<form asp-action="@(Model.Edicao ? "Editar" : "Criar")" asp-route-id="@(Model.Edicao ? Model.Demanda.Id : null)"
+      method="post" novalidate>
+    <input type="hidden" asp-for="Demanda.Id" />
+    <input type="hidden" asp-for="Demanda.Codigo" />
+    <input type="hidden" asp-for="Demanda.CriadoEm" />
+    <input type="hidden" asp-for="Demanda.DataInicio" />
+    <input type="hidden" asp-for="Demanda.DataConclusao" />
+
+    <div asp-validation-summary="ModelOnly" class="alerta alerta--critico mb-3"
+         style="@(ViewData.ModelState.ErrorCount > 0 ? "" : "display:none")">
+        <svg viewBox="0 0 24 24"><use href="#i-alerta" /></svg>
+        <div class="validation-summary-errors crescer"></div>
+    </div>
+
+    <div class="grade-painel">
+        <div>
+            <fieldset class="secao">
+                <legend><svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg> Descrição da demanda</legend>
+                <div class="form-grade">
+                    <div class="campo col-12">
+                        <label asp-for="Demanda.Titulo"></label>
+                        <input asp-for="Demanda.Titulo" class="entrada"
+                               placeholder="Resuma a demanda em uma frase" />
+                        <span asp-validation-for="Demanda.Titulo"></span>
+                    </div>
+                    <div class="campo col-12">
+                        <label asp-for="Demanda.Descricao"></label>
+                        <textarea asp-for="Demanda.Descricao" class="entrada" rows="7"
+                                  placeholder="Contexto, o que foi observado, o que já foi tentado, impacto para o usuário…"></textarea>
+                        <span asp-validation-for="Demanda.Descricao"></span>
+                    </div>
+                    <div class="campo col-12">
+                        <label asp-for="Demanda.Tags"></label>
+                        <input asp-for="Demanda.Tags" class="entrada" placeholder="rede, urgente, filial-norte" />
+                        <span class="ajuda">Separe por vírgulas. Ajuda a buscar demandas semelhantes depois.</span>
+                    </div>
+                </div>
+            </fieldset>
+
+            @if (Model.Edicao)
+            {
+                <fieldset class="secao">
+                    <legend><svg viewBox="0 0 24 24"><use href="#i-check-circulo" /></svg> Encerramento</legend>
+                    <div class="form-grade">
+                        <div class="campo col-4">
+                            <label asp-for="Demanda.PercentualConclusao"></label>
+                            <input asp-for="Demanda.PercentualConclusao" class="entrada" type="number" min="0" max="100" step="5" />
+                            <span asp-validation-for="Demanda.PercentualConclusao"></span>
+                        </div>
+                        <div class="campo col-8">
+                            <label asp-for="Demanda.Solucao"></label>
+                            <textarea asp-for="Demanda.Solucao" class="entrada" rows="3"
+                                      placeholder="O que resolveu a demanda"></textarea>
+                        </div>
+                    </div>
+                </fieldset>
+            }
+        </div>
+
+        <div>
+            <fieldset class="secao">
+                <legend><svg viewBox="0 0 24 24"><use href="#i-config" /></svg> Classificação</legend>
+                <div class="form-grade">
+                    <div class="campo col-12">
+                        <label asp-for="Demanda.Categoria"></label>
+                        <select asp-for="Demanda.Categoria" class="entrada"
+                                asp-items="ListaDeEnum<CategoriaDemanda>(Model.Demanda.Categoria)"></select>
+                    </div>
+                    <div class="campo col-6">
+                        <label asp-for="Demanda.Prioridade"></label>
+                        <select asp-for="Demanda.Prioridade" class="entrada" id="campo-prioridade"
+                                asp-items="ListaDeEnum<PrioridadeDemanda>(Model.Demanda.Prioridade)"></select>
+                    </div>
+                    <div class="campo col-6">
+                        <label asp-for="Demanda.Status"></label>
+                        <select asp-for="Demanda.Status" class="entrada"
+                                asp-items="ListaDeEnum<StatusDemanda>(Model.Demanda.Status)"></select>
+                    </div>
+                    <div class="campo col-12">
+                        <label asp-for="Demanda.PrazoLimite"></label>
+                        <input asp-for="Demanda.PrazoLimite" class="entrada" type="date" id="campo-prazo" />
+                        <span class="ajuda" id="ajuda-prazo">Deixe em branco para usar o SLA sugerido pela prioridade.</span>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="secao">
+                <legend><svg viewBox="0 0 24 24"><use href="#i-usuario" /></svg> Envolvidos</legend>
+                <div class="form-grade">
+                    <div class="campo col-12">
+                        <label asp-for="Demanda.SolicitanteId"></label>
+                        <select asp-for="Demanda.SolicitanteId" class="entrada" asp-items="Model.Listas.Colaboradores">
+                            <option value="">Não informado</option>
+                        </select>
+                    </div>
+                    <div class="campo col-12">
+                        <label asp-for="Demanda.DepartamentoId"></label>
+                        <select asp-for="Demanda.DepartamentoId" class="entrada" asp-items="Model.Listas.Departamentos">
+                            <option value="">Herdar do solicitante</option>
+                        </select>
+                    </div>
+                    <div class="campo col-12">
+                        <label asp-for="Demanda.Responsavel"></label>
+                        <input asp-for="Demanda.Responsavel" class="entrada" list="responsaveis-sugeridos"
+                               placeholder="Quem vai atender" />
+                        <datalist id="responsaveis-sugeridos">
+                            @foreach (var responsavel in Model.Listas.Responsaveis)
+                            {
+                                <option value="@responsavel.Value"></option>
+                            }
+                        </datalist>
+                    </div>
+                    <div class="campo col-12">
+                        <label asp-for="Demanda.AtivoId"></label>
+                        <select asp-for="Demanda.AtivoId" class="entrada" asp-items="Model.Listas.Ativos">
+                            <option value="">Nenhum ativo relacionado</option>
+                        </select>
+                        <span class="ajuda">Vincule quando a demanda for sobre um equipamento específico.</span>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+
+    <div class="barra-acoes">
+        <a class="btn btn--contorno" asp-action="Index">Cancelar</a>
+        <button type="submit" class="btn btn--primario">
+            <svg viewBox="0 0 24 24"><use href="#i-check" /></svg>
+            @(Model.Edicao ? "Salvar alterações" : "Registrar demanda")
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Mostra o SLA sugerido conforme a prioridade escolhida, sem sobrescrever
+        // um prazo que o usuário já tenha definido.
+        (function () {
+            var SLA = { Critica: "4 horas", Alta: "1 dia útil", Media: "3 dias", Baixa: "7 dias" };
+
+            var prioridade = document.getElementById("campo-prioridade");
+            var ajuda = document.getElementById("ajuda-prazo");
+            var prazo = document.getElementById("campo-prazo");
+
+            prioridade.addEventListener("change", function () {
+                var valor = prioridade.options[prioridade.selectedIndex].value;
+                ajuda.textContent = prazo.value
+                    ? "Prazo definido manualmente."
+                    : "SLA sugerido para esta prioridade: " + (SLA[valor] || "7 dias") + ".";
+            });
+        })();
+    </script>
+}

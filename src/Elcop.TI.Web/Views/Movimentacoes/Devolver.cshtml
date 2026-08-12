@@ -1,0 +1,157 @@
+@model DevolucaoViewModel
+@{
+    var movimentacao = Model.Movimentacao;
+    ViewData["Titulo"] = "Registrar devolução";
+    ViewData["Subtitulo"] = $"Termo {movimentacao.Protocolo}";
+}
+
+<div class="migalhas">
+    <a asp-action="Index">Movimentações</a> <span>/</span>
+    <a asp-action="Detalhes" asp-route-id="@movimentacao.Id">@movimentacao.Protocolo</a> <span>/</span>
+    <span>Devolução</span>
+</div>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1><svg viewBox="0 0 24 24" width="24" height="24" class="texto-sucesso"><use href="#i-entrada" /></svg> Registrar devolução</h1>
+        <p>Confira o equipamento e os acessórios antes de devolvê-lo ao estoque de TI.</p>
+    </div>
+</div>
+
+@if (movimentacao.EstaAtrasada)
+{
+    <div class="alerta alerta--critico mb-3">
+        <svg viewBox="0 0 24 24"><use href="#i-alerta" /></svg>
+        <div>
+            <strong>Devolução em atraso</strong>
+            <div class="pequeno texto-suave">
+                A previsão era @movimentacao.DataPrevistaDevolucao?.ToString("dd/MM/yyyy")
+                — @movimentacao.DiasDeAtraso dia(s) de atraso.
+            </div>
+        </div>
+    </div>
+}
+
+<form asp-action="Devolver" method="post" novalidate>
+    <input type="hidden" asp-for="Devolucao.MovimentacaoId" />
+    <input type="hidden" asp-for="Devolucao.DataRetiradaOriginal" />
+
+    <div asp-validation-summary="ModelOnly" class="alerta alerta--critico mb-3"
+         style="@(ViewData.ModelState.ErrorCount > 0 ? "" : "display:none")">
+        <svg viewBox="0 0 24 24"><use href="#i-alerta" /></svg>
+        <div class="validation-summary-errors crescer"></div>
+    </div>
+
+    <div class="grade-painel">
+        <div>
+            <fieldset class="secao">
+                <legend><svg viewBox="0 0 24 24"><use href="#i-check-circulo" /></svg> Conferência da devolução</legend>
+                <div class="form-grade">
+                    <div class="campo col-6">
+                        <label asp-for="Devolucao.DataDevolucao"></label>
+                        <input asp-for="Devolucao.DataDevolucao" class="entrada" type="datetime-local" />
+                        <span asp-validation-for="Devolucao.DataDevolucao"></span>
+                    </div>
+                    <div class="campo col-6">
+                        <label asp-for="Devolucao.CondicaoDevolucao"></label>
+                        <select asp-for="Devolucao.CondicaoDevolucao" class="entrada"
+                                asp-items="ListaDeEnum<CondicaoAtivo>(Model.Devolucao.CondicaoDevolucao)"></select>
+                        <span asp-validation-for="Devolucao.CondicaoDevolucao"></span>
+                    </div>
+                    <div class="campo col-6">
+                        <label asp-for="Devolucao.ResponsavelRecebimento"></label>
+                        <input asp-for="Devolucao.ResponsavelRecebimento" class="entrada" placeholder="Quem recebeu" />
+                    </div>
+                    <div class="campo col-6">
+                        <label asp-for="Devolucao.StatusDestino"></label>
+                        <select asp-for="Devolucao.StatusDestino" class="entrada">
+                            <option value="@StatusAtivo.Disponivel">Voltar ao estoque (disponível)</option>
+                            <option value="@StatusAtivo.EmManutencao">Enviar para manutenção</option>
+                            <option value="@StatusAtivo.Reservado">Reservar para outro colaborador</option>
+                            <option value="@StatusAtivo.Danificado">Marcar como danificado</option>
+                            <option value="@StatusAtivo.Baixado">Dar baixa no ativo</option>
+                        </select>
+                        <span class="ajuda">Se marcar avaria, o ativo vai automaticamente para manutenção.</span>
+                    </div>
+                    <div class="campo col-12">
+                        <label asp-for="Devolucao.AcessoriosDevolvidos"></label>
+                        <input asp-for="Devolucao.AcessoriosDevolvidos" class="entrada" />
+                        <span class="ajuda">
+                            Entregues na retirada: @(string.IsNullOrWhiteSpace(movimentacao.AcessoriosEntregues)
+                                ? "nenhum registrado" : movimentacao.AcessoriosEntregues)
+                        </span>
+                    </div>
+                    <div class="campo col-12">
+                        <label class="caixa-marcacao">
+                            <input asp-for="Devolucao.ComAvaria" type="checkbox" />
+                            <span>
+                                Equipamento devolvido com avaria ou item faltante
+                                <div class="ajuda">Registre os detalhes nas observações abaixo.</div>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="campo col-12">
+                        <label asp-for="Devolucao.ObservacoesDevolucao"></label>
+                        <textarea asp-for="Devolucao.ObservacoesDevolucao" class="entrada" rows="4"
+                                  placeholder="Estado do equipamento, itens faltantes, providências tomadas…"></textarea>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+
+        <div class="pilha g-4">
+            <section class="cartao">
+                <div class="cartao__cabecalho"><h2>Termo em aberto</h2></div>
+                <div class="cartao__corpo">
+                    <div class="linha g-3 mb-3">
+                        <span class="icone-tipo">
+                            <svg viewBox="0 0 24 24">
+                                <use href="#@("i-" + IconeTipoAtivo(movimentacao.Ativo?.Tipo ?? TipoAtivo.Outro))" />
+                            </svg>
+                        </span>
+                        <div class="crescer truncar">
+                            <strong class="texto-forte">@movimentacao.Ativo?.DescricaoCurta</strong>
+                            <div class="pequeno texto-suave mono">@movimentacao.Ativo?.Patrimonio</div>
+                        </div>
+                    </div>
+
+                    <dl class="lista-dados">
+                        <dt>Protocolo</dt><dd class="mono">@movimentacao.Protocolo</dd>
+                        <dt>Colaborador</dt><dd>@movimentacao.Colaborador?.NomeCompleto</dd>
+                        <dt>Matrícula</dt><dd class="mono">@movimentacao.Colaborador?.Matricula</dd>
+                        <dt>Retirada</dt><dd>@movimentacao.DataRetirada.ToString("dd/MM/yyyy HH:mm")</dd>
+                        <dt>Tempo em posse</dt><dd>@movimentacao.DiasEmPosse dia(s)</dd>
+                        <dt>Condição na retirada</dt><dd>@movimentacao.CondicaoRetirada.ObterNome()</dd>
+                        <dt>Nº de série</dt><dd class="mono">@(movimentacao.Ativo?.NumeroSerie ?? "—")</dd>
+                        @if (!string.IsNullOrWhiteSpace(movimentacao.Ativo?.Imei))
+                        {
+                            <dt>IMEI</dt><dd class="mono">@movimentacao.Ativo.Imei</dd>
+                        }
+                    </dl>
+                </div>
+            </section>
+
+            @if (!string.IsNullOrWhiteSpace(movimentacao.ObservacoesRetirada))
+            {
+                <div class="alerta alerta--info">
+                    <svg viewBox="0 0 24 24"><use href="#i-info" /></svg>
+                    <div>
+                        <strong>Observações da retirada</strong>
+                        <div class="pequeno texto-suave" style="white-space:pre-line">@movimentacao.ObservacoesRetirada</div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="barra-acoes">
+        <a class="btn btn--contorno" asp-action="Detalhes" asp-route-id="@movimentacao.Id">Cancelar</a>
+        <button type="submit" class="btn btn--sucesso">
+            <svg viewBox="0 0 24 24"><use href="#i-check" /></svg> Confirmar devolução
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

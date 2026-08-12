@@ -1,0 +1,146 @@
+@model QuadroDemandasViewModel
+@{
+    ViewData["Titulo"] = "Quadro de demandas";
+    ViewData["Subtitulo"] = $"{Model.Quadro.TotalDemandas} demanda(s) no quadro";
+    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+
+    var coresColuna = new Dictionary<StatusDemanda, string>
+    {
+        [StatusDemanda.Aberta] = "var(--cor-info)",
+        [StatusDemanda.EmAndamento] = "var(--marca-vinho)",
+        [StatusDemanda.AguardandoTerceiros] = "var(--cor-aviso)",
+        [StatusDemanda.Pausada] = "var(--texto-tenue)",
+        [StatusDemanda.Concluida] = "var(--cor-sucesso)"
+    };
+}
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1><svg viewBox="0 0 24 24" width="24" height="24" class="texto-marca"><use href="#i-quadro" /></svg> Quadro de demandas</h1>
+        <p>
+            Arraste os cartões entre as colunas para atualizar o andamento — cada movimento fica registrado
+            na linha do tempo da demanda.
+        </p>
+    </div>
+    <div class="cabecalho-pagina__acoes">
+        <a class="btn btn--contorno" asp-action="Index">
+            <svg viewBox="0 0 24 24"><use href="#i-relatorio" /></svg> Ver em lista
+        </a>
+        @if (podeOperar)
+        {
+            <a class="btn btn--primario" asp-action="Criar">
+                <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg> Nova demanda
+            </a>
+        }
+    </div>
+</div>
+
+<form method="get" class="cartao painel-filtros" data-filtro-auto>
+    <div class="cartao__corpo cartao__corpo--compacto painel-filtros__topo">
+        <label class="busca">
+            <svg viewBox="0 0 24 24"><use href="#i-busca" /></svg>
+            <input class="entrada" type="search" name="Busca" value="@Model.Quadro.Filtro.Busca"
+                   placeholder="Filtrar o quadro…" data-busca-instantanea aria-label="Filtrar quadro" />
+        </label>
+
+        <select class="entrada" name="Prioridade" style="width:auto"
+                asp-items='ListaDeEnum<PrioridadeDemanda>(Model.Quadro.Filtro.Prioridade, "Todas as prioridades")'></select>
+
+        <select class="entrada" name="Categoria" style="width:auto"
+                asp-items='ListaDeEnum<CategoriaDemanda>(Model.Quadro.Filtro.Categoria, "Todas as categorias")'></select>
+
+        <select class="entrada" name="Responsavel" style="width:auto" asp-items="Model.Listas.Responsaveis">
+            <option value="">Todos os responsáveis</option>
+        </select>
+
+        @if (Model.Quadro.TotalAtrasadas > 0)
+        {
+            <span class="selo selo--perigo">@Model.Quadro.TotalAtrasadas fora do prazo</span>
+        }
+    </div>
+</form>
+
+@if (Model.Quadro.TotalDemandas == 0)
+{
+    <section class="cartao">
+        <div class="vazio">
+            <svg viewBox="0 0 24 24"><use href="#i-quadro" /></svg>
+            <h3>Quadro vazio</h3>
+            <p>Nenhuma demanda ativa corresponde aos filtros. Registre uma nova demanda para começar.</p>
+            @if (podeOperar)
+            {
+                <a class="btn btn--primario btn--pequeno" asp-action="Criar">Nova demanda</a>
+            }
+        </div>
+    </section>
+}
+else
+{
+    <div class="kanban" data-kanban="@Url.Action("Mover")">
+        @Html.AntiForgeryToken()
+
+        @foreach (var coluna in Model.Quadro.Colunas)
+        {
+            <section class="kanban__coluna" data-status="@coluna.Status" data-rotulo="@coluna.Titulo">
+                <header class="kanban__cabecalho">
+                    <i style="width:9px;height:9px;border-radius:50%;background:@coresColuna.GetValueOrDefault(coluna.Status, "var(--marca-vinho)")"></i>
+                    <strong>@coluna.Titulo</strong>
+                    <span class="sidebar__contador" style="margin-left:auto;background:var(--fundo-superficie);color:var(--texto-suave);border:1px solid var(--borda)"
+                          data-contador-coluna>@coluna.Total</span>
+                </header>
+
+                <div class="kanban__lista">
+                    @foreach (var demanda in coluna.Demandas)
+                    {
+                        var cor = demanda.Prioridade switch
+                        {
+                            PrioridadeDemanda.Critica => "var(--cor-perigo)",
+                            PrioridadeDemanda.Alta => "var(--cor-atencao)",
+                            PrioridadeDemanda.Media => "var(--cor-info)",
+                            _ => "var(--cor-sucesso)"
+                        };
+
+                        <article class="kanban__cartao" style="--cartao-cor:@cor"
+                                 data-id="@demanda.Id" data-status="@demanda.Status" data-titulo="@demanda.Titulo">
+                            <div class="linha g-2 mb-1">
+                                <span class="minusculo mono texto-tenue">@demanda.Codigo</span>
+                                @if (demanda.Atrasada)
+                                {
+                                    <span class="selo selo--perigo" style="margin-left:auto">atrasada</span>
+                                }
+                            </div>
+
+                            <h4><a asp-action="Detalhes" asp-route-id="@demanda.Id">@demanda.Titulo</a></h4>
+
+                            <div class="progresso @(demanda.PercentualConclusao == 100 ? "progresso--sucesso" : "")">
+                                <div class="progresso__barra" data-barra="@demanda.PercentualConclusao"></div>
+                            </div>
+
+                            <div class="meta">
+                                <span class="selo selo--@ClassePrioridade(demanda.Prioridade)">@demanda.Prioridade.ObterNome()</span>
+                                <span class="chip">@demanda.Categoria.ObterNome()</span>
+                            </div>
+
+                            <div class="meta">
+                                @if (demanda.Solicitante is not null)
+                                {
+                                    <span class="avatar avatar--pequeno" style="background:@CorAvatar(demanda.Solicitante.NomeCompleto);width:22px;height:22px;font-size:.6rem">
+                                        @demanda.Solicitante.Iniciais
+                                    </span>
+                                    <span class="truncar">@demanda.Solicitante.PrimeiroNome</span>
+                                }
+                                @if (demanda.PrazoLimite.HasValue)
+                                {
+                                    <span style="margin-left:auto" class="linha g-1">
+                                        <svg viewBox="0 0 24 24" width="13" height="13"><use href="#i-calendario" /></svg>
+                                        @demanda.PrazoLimite.Value.ToString("dd/MM")
+                                    </span>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+}

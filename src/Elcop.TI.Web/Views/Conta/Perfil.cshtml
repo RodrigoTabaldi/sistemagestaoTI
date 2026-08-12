@@ -1,0 +1,99 @@
+@model PerfilViewModel
+@{
+    ViewData["Titulo"] = "Meu perfil";
+    ViewData["Subtitulo"] = Model.Email;
+    var iniciais = string.Concat(Model.NomeCompleto
+        .Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => p[0])).ToUpperInvariant();
+}
+
+<div class="cabecalho-pagina">
+    <div class="linha g-3">
+        <span class="avatar avatar--grande" style="background:@CorAvatar(Model.NomeCompleto)">@iniciais</span>
+        <div>
+            <h1>@Model.NomeCompleto</h1>
+            <p class="linha g-2 envolve">
+                <span>@Model.Email</span>
+                @if (Model.Perfil is not null)
+                {
+                    <span class="selo selo--primario">@Model.Perfil</span>
+                }
+                @if (Model.UltimoAcesso.HasValue)
+                {
+                    <span class="texto-tenue pequeno">último acesso @TempoRelativo(Model.UltimoAcesso.Value)</span>
+                }
+            </p>
+        </div>
+    </div>
+</div>
+
+<div class="grade-2">
+    <form asp-action="Perfil" method="post" class="cartao" novalidate>
+        <div class="cartao__cabecalho"><h2>Dados pessoais</h2></div>
+        <div class="cartao__corpo pilha g-3">
+            <div class="campo">
+                <label asp-for="NomeCompleto"></label>
+                <input asp-for="NomeCompleto" class="entrada" />
+                <span asp-validation-for="NomeCompleto"></span>
+            </div>
+            <div class="campo">
+                <label asp-for="Cargo"></label>
+                <input asp-for="Cargo" class="entrada" placeholder="Analista de Suporte" />
+            </div>
+            <div class="campo">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" class="entrada" disabled />
+                <span class="ajuda">O e-mail de login só pode ser alterado por um administrador.</span>
+            </div>
+        </div>
+        <div class="cartao__rodape linha fim">
+            <button type="submit" class="btn btn--primario btn--pequeno">
+                <svg viewBox="0 0 24 24"><use href="#i-check" /></svg> Salvar
+            </button>
+        </div>
+    </form>
+
+    <form asp-action="AlterarSenha" method="post" class="cartao" novalidate>
+        <div class="cartao__cabecalho"><h2>Alterar senha</h2></div>
+        <div class="cartao__corpo pilha g-3">
+            <div class="campo">
+                <label for="senha-atual">Senha atual</label>
+                <input id="senha-atual" name="SenhaAtual" class="entrada" type="password"
+                       autocomplete="current-password" required />
+            </div>
+            <div class="campo">
+                <label for="nova-senha">Nova senha</label>
+                <input id="nova-senha" name="NovaSenha" class="entrada" type="password"
+                       autocomplete="new-password" minlength="8" required />
+                <span class="ajuda">Mínimo de 8 caracteres, com ao menos uma maiúscula e um número.</span>
+            </div>
+            <div class="campo">
+                <label for="confirmar-senha">Confirmar nova senha</label>
+                <input id="confirmar-senha" name="ConfirmarSenha" class="entrada" type="password"
+                       autocomplete="new-password" minlength="8" required />
+            </div>
+        </div>
+        <div class="cartao__rodape linha fim">
+            <button type="submit" class="btn btn--contorno btn--pequeno">
+                <svg viewBox="0 0 24 24"><use href="#i-escudo" /></svg> Alterar senha
+            </button>
+        </div>
+    </form>
+</div>
+
+<section class="cartao mt-4">
+    <div class="cartao__cabecalho"><h2>Atalhos e preferências</h2></div>
+    <div class="cartao__corpo">
+        <dl class="lista-dados">
+            <dt>Alternar tema</dt><dd><span class="chip">Ctrl</span> + <span class="chip">K</span></dd>
+            <dt>Focar a busca</dt><dd><span class="chip">/</span></dd>
+            <dt>Recolher o menu</dt><dd>botão no rodapé da barra lateral</dd>
+        </dl>
+        <p class="pequeno texto-suave mt-3" style="margin-bottom:0">
+            O tema e o estado do menu ficam salvos neste navegador.
+        </p>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

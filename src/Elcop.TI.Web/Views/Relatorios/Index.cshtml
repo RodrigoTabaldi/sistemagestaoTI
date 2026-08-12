@@ -1,0 +1,140 @@
+@model PainelModel
+@{
+    ViewData["Titulo"] = "Relatórios";
+    ViewData["Subtitulo"] = "Análise do parque e exportações";
+    var resumo = ViewData["Resumo"] as IReadOnlyList<ResumoPorTipo> ?? Array.Empty<ResumoPorTipo>();
+}
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1><svg viewBox="0 0 24 24" width="24" height="24" class="texto-marca"><use href="#i-relatorio" /></svg> Relatórios</h1>
+        <p>Visão analítica do inventário e exportações em CSV (separador ";", compatível com o Excel).</p>
+    </div>
+</div>
+
+<div class="grade-3 mb-4">
+    <a class="cartao cartao--interativo cartao__corpo linha g-3" asp-action="Ativos">
+        <span class="kpi__icone" style="--kpi-cor:var(--marca-vinho)"><svg viewBox="0 0 24 24"><use href="#i-caixa" /></svg></span>
+        <span class="crescer">
+            <strong class="texto-forte">Inventário de ativos</strong>
+            <div class="pequeno texto-suave">Todos os campos, incluindo série, IMEI, garantia e posse atual.</div>
+        </span>
+        <svg viewBox="0 0 24 24" width="18" height="18" class="texto-suave"><use href="#i-download" /></svg>
+    </a>
+
+    <a class="cartao cartao--interativo cartao__corpo linha g-3" asp-action="Colaboradores">
+        <span class="kpi__icone" style="--kpi-cor:var(--cor-info)"><svg viewBox="0 0 24 24"><use href="#i-usuarios" /></svg></span>
+        <span class="crescer">
+            <strong class="texto-forte">Colaboradores</strong>
+            <div class="pequeno texto-suave">Matrícula, contato, lotação e situação do vínculo.</div>
+        </span>
+        <svg viewBox="0 0 24 24" width="18" height="18" class="texto-suave"><use href="#i-download" /></svg>
+    </a>
+
+    <a class="cartao cartao--interativo cartao__corpo linha g-3" asp-action="Movimentacoes">
+        <span class="kpi__icone" style="--kpi-cor:var(--cor-atencao)"><svg viewBox="0 0 24 24"><use href="#i-troca" /></svg></span>
+        <span class="crescer">
+            <strong class="texto-forte">Movimentações</strong>
+            <div class="pequeno texto-suave">Retiradas, devoluções, prazos e condição dos equipamentos.</div>
+        </span>
+        <svg viewBox="0 0 24 24" width="18" height="18" class="texto-suave"><use href="#i-download" /></svg>
+    </a>
+
+    <a class="cartao cartao--interativo cartao__corpo linha g-3" asp-action="Demandas">
+        <span class="kpi__icone" style="--kpi-cor:var(--cor-sucesso)"><svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg></span>
+        <span class="crescer">
+            <strong class="texto-forte">Demandas</strong>
+            <div class="pequeno texto-suave">Chamados com prazo, progresso e tempo apontado.</div>
+        </span>
+        <svg viewBox="0 0 24 24" width="18" height="18" class="texto-suave"><use href="#i-download" /></svg>
+    </a>
+</div>
+
+<div class="grade-painel mb-4">
+    <section class="cartao">
+        <div class="cartao__cabecalho"><h2>Parque por tipo de ativo</h2></div>
+
+        @if (resumo.Count == 0)
+        {
+            <div class="cartao__corpo"><p class="texto-tenue pequeno" style="margin:0">Sem ativos cadastrados.</p></div>
+        }
+        else
+        {
+            <div class="tabela-wrapper">
+                <table class="tabela">
+                    <thead>
+                        <tr>
+                            <th>Tipo</th><th class="num">Total</th><th class="num">Disponíveis</th>
+                            <th class="num">Em uso</th><th class="num">Manutenção</th><th class="num">Valor total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in resumo)
+                        {
+                            <tr>
+                                <td>
+                                    <a class="celula-principal" asp-controller="Ativos" asp-action="Index" asp-route-Tipo="@item.Tipo">
+                                        <span class="icone-tipo">
+                                            <svg viewBox="0 0 24 24"><use href="#@("i-" + IconeTipoAtivo(item.Tipo))" /></svg>
+                                        </span>
+                                        <span><strong>@item.Descricao</strong></span>
+                                    </a>
+                                </td>
+                                <td class="num negrito">@item.Total</td>
+                                <td class="num texto-sucesso">@item.Disponiveis</td>
+                                <td class="num">@item.EmUso</td>
+                                <td class="num">@item.EmManutencao</td>
+                                <td class="num">@item.ValorTotal.ToString("C")</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr style="background:var(--fundo-superficie-2)">
+                            <td class="negrito">Total geral</td>
+                            <td class="num negrito">@resumo.Sum(r => r.Total)</td>
+                            <td class="num negrito">@resumo.Sum(r => r.Disponiveis)</td>
+                            <td class="num negrito">@resumo.Sum(r => r.EmUso)</td>
+                            <td class="num negrito">@resumo.Sum(r => r.EmManutencao)</td>
+                            <td class="num negrito">@resumo.Sum(r => r.ValorTotal).ToString("C")</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+    </section>
+
+    <section class="cartao">
+        <div class="cartao__cabecalho"><h2>Distribuição por situação</h2></div>
+        <div class="cartao__corpo">
+            <partial name="_GraficoRosca" model="Model.AtivosPorStatus" />
+
+            <h3 class="mt-4 mb-2" style="font-size:.86rem">Demandas por status</h3>
+            <partial name="_GraficoBarras" model="Model.DemandasPorStatus" />
+        </div>
+    </section>
+</div>
+
+<div class="grade-2">
+    <section class="cartao">
+        <div class="cartao__cabecalho"><h2>Indicadores operacionais</h2></div>
+        <div class="cartao__corpo">
+            <dl class="lista-dados">
+                <dt>Taxa de utilização do parque</dt><dd>@Model.TaxaUtilizacao.ToString("0.#")%</dd>
+                <dt>Taxa de disponibilidade</dt><dd>@Model.TaxaDisponibilidade.ToString("0.#")%</dd>
+                <dt>Valor total do inventário</dt><dd>@Model.ValorInventario.ToString("C")</dd>
+                <dt>Colaboradores com ativos</dt><dd>@Model.ColaboradoresComAtivos de @Model.TotalColaboradores</dd>
+                <dt>Movimentações no mês</dt><dd>@Model.MovimentacoesNoMes</dd>
+                <dt>Devoluções em atraso</dt><dd>@Model.DevolucoesAtrasadas</dd>
+                <dt>Tempo médio de atendimento</dt><dd>@Model.TempoMedioAtendimentoHoras.ToString("0.#") h</dd>
+                <dt>Demandas concluídas no mês</dt><dd>@Model.DemandasConcluidasNoMes</dd>
+            </dl>
+        </div>
+    </section>
+
+    <section class="cartao">
+        <div class="cartao__cabecalho"><h2>Ativos por departamento</h2></div>
+        <div class="cartao__corpo">
+            <partial name="_GraficoBarras" model="Model.AtivosPorDepartamento" />
+        </div>
+    </section>
+</div>

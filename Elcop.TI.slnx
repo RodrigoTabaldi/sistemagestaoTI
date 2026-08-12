@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Elcop.TI.Application/Elcop.TI.Application.csproj" />
+    <Project Path="src/Elcop.TI.Domain/Elcop.TI.Domain.csproj" />
+    <Project Path="src/Elcop.TI.Infrastructure/Elcop.TI.Infrastructure.csproj" />
+    <Project Path="src/Elcop.TI.Web/Elcop.TI.Web.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,73 @@
+@model TransferenciaViewModel
+@{
+    ViewData["Titulo"] = "Transferir ativo";
+    ViewData["Subtitulo"] = Model.Movimentacao?.Protocolo;
+}
+
+<div class="migalhas">
+    <a asp-action="Index">Movimentações</a> <span>/</span>
+    <a asp-action="Detalhes" asp-route-id="@Model.MovimentacaoId">@Model.Movimentacao?.Protocolo</a> <span>/</span>
+    <span>Transferência</span>
+</div>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1><svg viewBox="0 0 24 24" width="24" height="24" class="texto-marca"><use href="#i-troca" /></svg> Transferir posse do ativo</h1>
+        <p>O termo atual é encerrado e um novo termo é gerado para o colaborador de destino, em uma única operação.</p>
+    </div>
+</div>
+
+<div class="grade-painel">
+    <form asp-action="Transferir" method="post" novalidate>
+        <input type="hidden" asp-for="MovimentacaoId" />
+
+        <div asp-validation-summary="ModelOnly" class="alerta alerta--critico mb-3"
+             style="@(ViewData.ModelState.ErrorCount > 0 ? "" : "display:none")">
+            <svg viewBox="0 0 24 24"><use href="#i-alerta" /></svg>
+            <div class="validation-summary-errors crescer"></div>
+        </div>
+
+        <fieldset class="secao">
+            <legend><svg viewBox="0 0 24 24"><use href="#i-usuario" /></svg> Novo responsável</legend>
+            <div class="form-grade">
+                <div class="campo col-12">
+                    <label asp-for="NovoColaboradorId"></label>
+                    <select asp-for="NovoColaboradorId" class="entrada" asp-items="Model.Listas.Colaboradores">
+                        <option value="">Selecione o colaborador de destino…</option>
+                    </select>
+                    <span asp-validation-for="NovoColaboradorId"></span>
+                </div>
+                <div class="campo col-12">
+                    <label asp-for="Observacoes"></label>
+                    <textarea asp-for="Observacoes" class="entrada" rows="4"
+                              placeholder="Motivo da transferência, conferência realizada, itens conferidos…"></textarea>
+                </div>
+            </div>
+        </fieldset>
+
+        <div class="barra-acoes">
+            <a class="btn btn--contorno" asp-action="Detalhes" asp-route-id="@Model.MovimentacaoId">Cancelar</a>
+            <button type="submit" class="btn btn--primario">
+                <svg viewBox="0 0 24 24"><use href="#i-troca" /></svg> Confirmar transferência
+            </button>
+        </div>
+    </form>
+
+    <section class="cartao" style="align-self:start">
+        <div class="cartao__cabecalho"><h2>Situação atual</h2></div>
+        <div class="cartao__corpo">
+            <dl class="lista-dados">
+                <dt>Equipamento</dt><dd>@Model.Movimentacao?.Ativo?.DescricaoCurta</dd>
+                <dt>Patrimônio</dt><dd class="mono">@Model.Movimentacao?.Ativo?.Patrimonio</dd>
+                <dt>Responsável atual</dt><dd>@Model.Movimentacao?.Colaborador?.NomeCompleto</dd>
+                <dt>Desde</dt><dd>@Model.Movimentacao?.DataRetirada.ToString("dd/MM/yyyy")</dd>
+                <dt>Acessórios</dt>
+                <dd>@(string.IsNullOrWhiteSpace(Model.Movimentacao?.AcessoriosEntregues) ? "—" : Model.Movimentacao!.AcessoriosEntregues)</dd>
+            </dl>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

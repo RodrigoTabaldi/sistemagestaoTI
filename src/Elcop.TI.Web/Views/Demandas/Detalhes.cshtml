@@ -1,0 +1,254 @@
+@model DetalhesDemandaViewModel
+@{
+    var demanda = Model.Demanda;
+    ViewData["Titulo"] = demanda.Codigo;
+    ViewData["Subtitulo"] = demanda.Titulo;
+    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+}
+
+<div class="migalhas">
+    <a asp-action="Index">Demandas</a> <span>/</span> <span>@demanda.Codigo</span>
+</div>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>@demanda.Titulo</h1>
+        <p class="linha g-2 envolve">
+            <span class="mono">@demanda.Codigo</span>
+            <span class="selo selo--@ClasseStatusDemanda(demanda.Status)">@demanda.Status.ObterNome()</span>
+            <span class="selo selo--@ClassePrioridade(demanda.Prioridade)">@demanda.Prioridade.ObterNome()</span>
+            <span class="chip">@demanda.Categoria.ObterNome()</span>
+            @if (demanda.Atrasada)
+            {
+                <span class="selo selo--perigo">fora do prazo</span>
+            }
+            @foreach (var tag in demanda.ListaTags)
+            {
+                <span class="chip">#@tag</span>
+            }
+        </p>
+    </div>
+
+    <div class="cabecalho-pagina__acoes">
+        @if (podeOperar)
+        {
+            <a class="btn btn--contorno" asp-action="Editar" asp-route-id="@demanda.Id">
+                <svg viewBox="0 0 24 24"><use href="#i-editar" /></svg> Editar
+            </a>
+            <div class="suspenso">
+                <button type="button" class="btn btn--contorno" data-suspenso="menu-demanda">Mais ações</button>
+                <div class="suspenso__conteudo" id="menu-demanda" hidden>
+                    <a class="suspenso__item" asp-action="Quadro">
+                        <svg viewBox="0 0 24 24"><use href="#i-quadro" /></svg> Abrir no quadro
+                    </a>
+                    <div class="suspenso__separador"></div>
+                    <form asp-action="Excluir" asp-route-id="@demanda.Id" method="post"
+                          data-confirmar="@($"A demanda {demanda.Codigo} será removida da listagem.")"
+                          data-confirmar-titulo="Excluir demanda" data-confirmar-ok="Excluir" data-confirmar-perigo="true">
+                        <button type="submit" class="suspenso__item suspenso__item--perigo">
+                            <svg viewBox="0 0 24 24"><use href="#i-lixeira" /></svg> Excluir demanda
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="grade-painel">
+    <div class="pilha g-4">
+        <section class="cartao">
+            <div class="cartao__cabecalho">
+                <h2>Descrição</h2>
+                <div class="acoes">
+                    <span class="chip">aberta @TempoRelativo(demanda.DataAbertura)</span>
+                </div>
+            </div>
+            <div class="cartao__corpo">
+                <p style="white-space:pre-line;margin:0">@demanda.Descricao</p>
+
+                @if (!string.IsNullOrWhiteSpace(demanda.Solucao))
+                {
+                    <div class="alerta alerta--sucesso mt-3">
+                        <svg viewBox="0 0 24 24"><use href="#i-check-circulo" /></svg>
+                        <div>
+                            <strong>Solução aplicada</strong>
+                            <div class="pequeno" style="white-space:pre-line">@demanda.Solucao</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </section>
+
+        @if (podeOperar)
+        {
+            <section class="cartao">
+                <div class="cartao__cabecalho">
+                    <h2><svg viewBox="0 0 24 24" width="18" height="18" class="texto-marca"><use href="#i-mais" /></svg> Registrar andamento</h2>
+                </div>
+                <form asp-action="Andamento" method="post" class="cartao__corpo">
+                    <input type="hidden" name="DemandaId" value="@demanda.Id" />
+
+                    <div class="form-grade">
+                        <div class="campo col-12">
+                            <label for="descricao-andamento">O que foi feito</label>
+                            <textarea id="descricao-andamento" name="Descricao" class="entrada" rows="3" required
+                                      placeholder="Descreva a tratativa, o contato realizado ou o próximo passo…"></textarea>
+                        </div>
+                        <div class="campo col-4">
+                            <label for="novo-status">Alterar status para</label>
+                            <select id="novo-status" name="NovoStatus" class="entrada"
+                                    asp-items="ListaDeEnum<StatusDemanda>(demanda.Status)"></select>
+                        </div>
+                        <div class="campo col-4">
+                            <label for="tempo-gasto">Tempo gasto (min)</label>
+                            <input id="tempo-gasto" name="TempoGastoMinutos" class="entrada" type="number"
+                                   min="0" max="10000" step="5" value="0" />
+                        </div>
+                        <div class="campo col-4">
+                            <label for="percentual">Progresso (%)</label>
+                            <input id="percentual" name="PercentualConclusao" class="entrada" type="number"
+                                   min="0" max="100" step="5" value="@demanda.PercentualConclusao" />
+                        </div>
+                    </div>
+
+                    <div class="linha fim mt-3">
+                        <button type="submit" class="btn btn--primario">
+                            <svg viewBox="0 0 24 24"><use href="#i-check" /></svg> Registrar andamento
+                        </button>
+                    </div>
+                </form>
+            </section>
+        }
+
+        <section class="cartao">
+            <div class="cartao__cabecalho">
+                <h2>Linha do tempo</h2>
+                <div class="acoes"><span class="chip">@demanda.Andamentos.Count registro(s)</span></div>
+            </div>
+            <div class="cartao__corpo">
+                @if (demanda.Andamentos.Count == 0)
+                {
+                    <p class="texto-tenue pequeno" style="margin:0">Nenhum andamento registrado até o momento.</p>
+                }
+                else
+                {
+                    <div class="linha-tempo">
+                        @foreach (var (andamento, indice) in demanda.Andamentos.OrderByDescending(a => a.Data).Select((a, i) => (a, i)))
+                        {
+                            var classe = andamento.StatusNovo == StatusDemanda.Concluida
+                                ? "linha-tempo__item--sucesso"
+                                : andamento.Automatico ? "linha-tempo__item--auto" : "";
+
+                            <div class="linha-tempo__item @classe" style="--atraso:@(indice * 40)ms">
+                                <div class="linha-tempo__cabecalho">
+                                    <strong>@(andamento.Autor ?? "Sistema")</strong>
+                                    <time title="@andamento.Data.ToString("dd/MM/yyyy HH:mm")">@TempoRelativo(andamento.Data)</time>
+
+                                    @if (andamento.HouveMudancaDeStatus && andamento.StatusNovo.HasValue)
+                                    {
+                                        <span class="selo selo--@ClasseStatusDemanda(andamento.StatusNovo.Value)">
+                                            @andamento.StatusNovo.Value.ObterNome()
+                                        </span>
+                                    }
+                                    @if (andamento.TempoGastoMinutos > 0)
+                                    {
+                                        <span class="chip">@andamento.TempoGastoMinutos min</span>
+                                    }
+                                    @if (andamento.PercentualInformado.HasValue)
+                                    {
+                                        <span class="chip">@andamento.PercentualInformado%</span>
+                                    }
+                                </div>
+                                <div class="linha-tempo__corpo">@andamento.Descricao</div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+    </div>
+
+    <div class="pilha g-4">
+        <section class="cartao">
+            <div class="cartao__cabecalho"><h2>Progresso</h2></div>
+            <div class="cartao__corpo">
+                <div class="linha entre mb-2">
+                    <span class="pequeno texto-suave">Conclusão</span>
+                    <strong class="texto-forte">@demanda.PercentualConclusao%</strong>
+                </div>
+                <div class="progresso @(demanda.PercentualConclusao == 100 ? "progresso--sucesso" : "")">
+                    <div class="progresso__barra" data-barra="@demanda.PercentualConclusao"></div>
+                </div>
+
+                <dl class="lista-dados mt-4">
+                    <dt>Abertura</dt><dd>@demanda.DataAbertura.ToString("dd/MM/yyyy HH:mm")</dd>
+                    <dt>Início do atendimento</dt>
+                    <dd>@(demanda.DataInicio?.ToString("dd/MM/yyyy HH:mm") ?? "—")</dd>
+                    <dt>Prazo (SLA)</dt>
+                    <dd>
+                        @if (demanda.PrazoLimite.HasValue)
+                        {
+                            <span class="selo selo--@(demanda.Atrasada ? "perigo" : "info") selo--sem-ponto">
+                                @demanda.PrazoLimite.Value.ToString("dd/MM/yyyy")
+                            </span>
+                            @if (demanda.DiasRestantes is { } dias && !demanda.Encerrada)
+                            {
+                                <div class="minusculo texto-tenue mt-1">
+                                    @(dias < 0 ? $"{Math.Abs(dias)} dia(s) de atraso" : dias == 0 ? "vence hoje" : $"faltam {dias} dia(s)")
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <text>—</text>
+                        }
+                    </dd>
+                    <dt>Conclusão</dt>
+                    <dd>@(demanda.DataConclusao?.ToString("dd/MM/yyyy HH:mm") ?? "—")</dd>
+                    <dt>Tempo apontado</dt><dd>@demanda.TempoGastoFormatado</dd>
+                </dl>
+            </div>
+        </section>
+
+        <section class="cartao">
+            <div class="cartao__cabecalho"><h2>Envolvidos</h2></div>
+            <div class="cartao__corpo">
+                @if (demanda.Solicitante is { } solicitante)
+                {
+                    <a class="linha g-3 mb-3" asp-controller="Colaboradores" asp-action="Detalhes"
+                       asp-route-id="@solicitante.Id">
+                        <span class="avatar" style="background:@CorAvatar(solicitante.NomeCompleto)">@solicitante.Iniciais</span>
+                        <span class="crescer truncar">
+                            <strong class="texto-forte pequeno">@solicitante.NomeCompleto</strong>
+                            <div class="minusculo texto-suave">Solicitante · @(solicitante.Cargo ?? "—")</div>
+                        </span>
+                    </a>
+                }
+
+                <dl class="lista-dados">
+                    <dt>Responsável</dt><dd>@(demanda.Responsavel ?? "Não atribuído")</dd>
+                    <dt>Departamento</dt><dd>@(demanda.Departamento?.Nome ?? "—")</dd>
+                </dl>
+            </div>
+        </section>
+
+        @if (demanda.Ativo is { } ativo)
+        {
+            <section class="cartao">
+                <div class="cartao__cabecalho"><h2>Ativo relacionado</h2></div>
+                <div class="cartao__corpo">
+                    <a class="linha g-3" asp-controller="Ativos" asp-action="Detalhes" asp-route-id="@ativo.Id">
+                        <span class="icone-tipo">
+                            <svg viewBox="0 0 24 24"><use href="#@("i-" + IconeTipoAtivo(ativo.Tipo))" /></svg>
+                        </span>
+                        <span class="crescer truncar">
+                            <strong class="texto-forte pequeno">@ativo.DescricaoCurta</strong>
+                            <div class="minusculo texto-tenue mono">@ativo.Patrimonio</div>
+                        </span>
+                    </a>
+                </div>
+            </section>
+        }
+    </div>
+</div>

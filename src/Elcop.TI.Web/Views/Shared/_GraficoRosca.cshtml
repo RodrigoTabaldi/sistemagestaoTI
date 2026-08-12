@@ -1,0 +1,61 @@
+@model IReadOnlyList<ItemGrafico>
+@*
+    Rosca em SVG puro: cada fatia é um arco desenhado com stroke-dasharray.
+    O elcop.js anima o dasharray quando o gráfico entra na tela.
+*@
+@{
+    var total = Model.Sum(i => i.Valor);
+    const int raio = 62;
+    const int espessura = 17;
+    var paleta = new[] { "#8B1F26", "#3F6FB5", "#2E9E6B", "#B98A2E", "#9C2B7A", "#C4741C", "#4A5568", "#A8323A" };
+    decimal acumulado = 0m;
+}
+
+@if (total <= 0)
+{
+    <p class="texto-tenue pequeno" style="margin:0">Sem dados para exibir.</p>
+    return;
+}
+
+<div class="rosca">
+    <svg class="rosca__svg" width="160" height="160" viewBox="0 0 160 160" role="img"
+         aria-label="Distribuição por categoria">
+        <circle cx="80" cy="80" r="@raio" fill="none" stroke="var(--borda)" stroke-width="@espessura" />
+
+        @for (var i = 0; i < Model.Count; i++)
+        {
+            var item = Model[i];
+            var fracao = total == 0 ? 0m : item.Valor / total;
+            var cor = item.Cor ?? paleta[i % paleta.Length];
+            var rotacao = (double)(acumulado * 360m) - 90;
+            acumulado += fracao;
+
+            <circle cx="80" cy="80" r="@raio" fill="none"
+                    stroke="@cor" stroke-width="@espessura" stroke-linecap="butt"
+                    stroke-dasharray="0 @(2 * Math.PI * raio)"
+                    data-rosca-valor="@fracao.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                    transform="rotate(@rotacao.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) 80 80)">
+                <title>@item.Rotulo: @item.Valor.ToString("N0")</title>
+            </circle>
+        }
+
+        @* <text> é palavra reservada do Razor, por isso o centro da rosca vai como marcação crua. *@
+        @Html.Raw($"<text x=\"80\" y=\"76\" text-anchor=\"middle\" font-size=\"24\" font-weight=\"700\" fill=\"var(--texto-forte)\">{total:N0}</text>")
+        @Html.Raw("<text x=\"80\" y=\"95\" text-anchor=\"middle\" font-size=\"11\" fill=\"var(--texto-suave)\">total</text>")
+    </svg>
+
+    <div class="rosca__legenda">
+        @for (var i = 0; i < Model.Count; i++)
+        {
+            var item = Model[i];
+            var cor = item.Cor ?? paleta[i % paleta.Length];
+            var percentual = total == 0 ? 0 : (double)(item.Valor / total) * 100;
+
+            <div class="rosca__legenda-item">
+                <i style="background:@cor"></i>
+                <span>@item.Rotulo</span>
+                <strong>@item.Valor.ToString("N0") <span class="texto-tenue minusculo">(@percentual.ToString("0.#")%)</span></strong>
+            </div>
+        }
+    </div>
+</div>

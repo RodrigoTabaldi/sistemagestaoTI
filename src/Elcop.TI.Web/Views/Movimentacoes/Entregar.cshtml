@@ -1,0 +1,172 @@
+@model EntregaViewModel
+@using System.Text.Json
+@{
+    ViewData["Titulo"] = "Registrar entrega";
+    ViewData["Subtitulo"] = "Retirada de equipamento por colaborador";
+
+    var opcoesJson = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+}
+
+<div class="migalhas">
+    <a asp-action="Index">Movimentações</a> <span>/</span> <span>Registrar entrega</span>
+</div>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1><svg viewBox="0 0 24 24" width="24" height="24" class="texto-marca"><use href="#i-saida" /></svg> Registrar entrega de ativo</h1>
+        <p>Preencha os campos da retirada. Ao salvar, o sistema gera o protocolo e o termo de responsabilidade.</p>
+    </div>
+</div>
+
+<form asp-action="Entregar" method="post" novalidate data-entrega>
+    <div asp-validation-summary="ModelOnly" class="alerta alerta--critico mb-3"
+         style="@(ViewData.ModelState.ErrorCount > 0 ? "" : "display:none")">
+        <svg viewBox="0 0 24 24"><use href="#i-alerta" /></svg>
+        <div class="validation-summary-errors crescer"></div>
+    </div>
+
+    <div class="grade-painel">
+        <div>
+            <fieldset class="secao">
+                <legend><svg viewBox="0 0 24 24"><use href="#i-caixa" /></svg> 1 · O que está saindo</legend>
+                <div class="form-grade">
+                    <div class="campo col-12">
+                        <label asp-for="Entrega.AtivoId"></label>
+                        <select asp-for="Entrega.AtivoId" class="entrada" data-entrega-ativo
+                                asp-items="Model.Listas.Ativos">
+                            <option value="">Selecione o equipamento disponível…</option>
+                        </select>
+                        <span class="ajuda">Somente ativos disponíveis ou reservados aparecem nesta lista.</span>
+                        <span asp-validation-for="Entrega.AtivoId"></span>
+                    </div>
+                    <div class="campo col-6">
+                        <label asp-for="Entrega.Tipo"></label>
+                        <select asp-for="Entrega.Tipo" class="entrada"
+                                asp-items="ListaDeEnum<TipoMovimentacao>(Model.Entrega.Tipo)"></select>
+                        <span class="ajuda">Empréstimo temporário exige previsão de devolução.</span>
+                    </div>
+                    <div class="campo col-6">
+                        <label asp-for="Entrega.CondicaoRetirada"></label>
+                        <select asp-for="Entrega.CondicaoRetirada" class="entrada"
+                                asp-items="ListaDeEnum<CondicaoAtivo>(Model.Entrega.CondicaoRetirada)"></select>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="secao">
+                <legend><svg viewBox="0 0 24 24"><use href="#i-usuario" /></svg> 2 · Quem está retirando</legend>
+                <div class="form-grade">
+                    <div class="campo col-12">
+                        <label asp-for="Entrega.ColaboradorId"></label>
+                        <select asp-for="Entrega.ColaboradorId" class="entrada" data-entrega-colaborador
+                                asp-items="Model.Listas.Colaboradores">
+                            <option value="">Selecione o colaborador…</option>
+                        </select>
+                        <span asp-validation-for="Entrega.ColaboradorId"></span>
+                    </div>
+                    <div class="campo col-12">
+                        <label class="caixa-marcacao">
+                            <input asp-for="Entrega.HerdarLotacao" type="checkbox" />
+                            <span>
+                                Atualizar departamento e localização do ativo com os do colaborador
+                                <div class="ajuda">Mantém o inventário coerente com a lotação de quem usa o equipamento.</div>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="secao">
+                <legend><svg viewBox="0 0 24 24"><use href="#i-calendario" /></svg> 3 · Datas e responsáveis</legend>
+                <div class="form-grade">
+                    <div class="campo col-4">
+                        <label asp-for="Entrega.DataRetirada"></label>
+                        <input asp-for="Entrega.DataRetirada" class="entrada" type="datetime-local" />
+                        <span asp-validation-for="Entrega.DataRetirada"></span>
+                    </div>
+                    <div class="campo col-4">
+                        <label asp-for="Entrega.DataPrevistaDevolucao"></label>
+                        <input asp-for="Entrega.DataPrevistaDevolucao" class="entrada" type="date" />
+                        <span class="ajuda">Deixe em branco para entrega por tempo indeterminado.</span>
+                        <span asp-validation-for="Entrega.DataPrevistaDevolucao"></span>
+                    </div>
+                    <div class="campo col-4">
+                        <label asp-for="Entrega.LocalEntrega"></label>
+                        <input asp-for="Entrega.LocalEntrega" class="entrada" placeholder="Almoxarifado de TI" />
+                    </div>
+                    <div class="campo col-6">
+                        <label asp-for="Entrega.ResponsavelEntrega"></label>
+                        <input asp-for="Entrega.ResponsavelEntrega" class="entrada" placeholder="Quem entregou o equipamento" />
+                    </div>
+                    <div class="campo col-6">
+                        <label asp-for="Entrega.AcessoriosEntregues"></label>
+                        <input asp-for="Entrega.AcessoriosEntregues" class="entrada" data-entrega-acessorios
+                               placeholder="Fonte, capa, cabo…" />
+                        <span class="ajuda">Preenchido automaticamente com os acessórios do ativo.</span>
+                    </div>
+                    <div class="campo col-12">
+                        <label asp-for="Entrega.ObservacoesRetirada"></label>
+                        <textarea asp-for="Entrega.ObservacoesRetirada" class="entrada" rows="3"
+                                  placeholder="Marcas, riscos, itens faltantes, orientações dadas ao colaborador…"></textarea>
+                    </div>
+                    <div class="campo col-12">
+                        <label class="caixa-marcacao">
+                            <input asp-for="Entrega.TermoAssinado" type="checkbox" />
+                            <span>
+                                O colaborador assinou o termo de responsabilidade
+                                <div class="ajuda">O termo pode ser impresso após salvar a movimentação.</div>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+
+        @* ------------------------------------------------ Pré-visualização *@
+        <div class="pilha g-4">
+            <section class="cartao">
+                <div class="cartao__cabecalho">
+                    <h2>Equipamento selecionado</h2>
+                </div>
+                <div class="cartao__corpo" data-preview-ativo>
+                    <p class="texto-tenue pequeno" style="margin:0">Selecione um ativo para ver os detalhes.</p>
+                </div>
+            </section>
+
+            <section class="cartao">
+                <div class="cartao__cabecalho">
+                    <h2>Colaborador</h2>
+                </div>
+                <div class="cartao__corpo" data-preview-colaborador>
+                    <p class="texto-tenue pequeno" style="margin:0">Selecione quem está retirando o equipamento.</p>
+                </div>
+            </section>
+
+            <div class="alerta alerta--info">
+                <svg viewBox="0 0 24 24"><use href="#i-info" /></svg>
+                <div>
+                    <strong>Como funciona</strong>
+                    <div class="pequeno texto-suave">
+                        Ao salvar, o ativo passa para "em uso", fica vinculado ao colaborador e sai da lista de
+                        disponíveis. A devolução é registrada na tela do próprio termo.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="barra-acoes">
+        <a class="btn btn--contorno" asp-action="Index">Cancelar</a>
+        <button type="submit" class="btn btn--primario">
+            <svg viewBox="0 0 24 24"><use href="#i-check" /></svg> Registrar entrega
+        </button>
+    </div>
+
+    @* Catálogos consumidos pelo elcop.js para montar a pré-visualização sem ida ao servidor. *@
+    <script type="application/json" id="catalogo-ativos">@Html.Raw(JsonSerializer.Serialize(Model.CatalogoAtivos, opcoesJson))</script>
+    <script type="application/json" id="catalogo-colaboradores">@Html.Raw(JsonSerializer.Serialize(Model.CatalogoColaboradores, opcoesJson))</script>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,236 @@
+@model ListagemAtivosViewModel
+@{
+    ViewData["Titulo"] = "Ativos";
+    ViewData["Subtitulo"] = $"{Model.Pagina.TotalItens:N0} equipamento(s) no inventário";
+    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+}
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1><svg viewBox="0 0 24 24" width="24" height="24" class="texto-marca"><use href="#i-caixa" /></svg> Inventário de ativos</h1>
+        <p>Notebooks, celulares, bodycams, monitores, impressoras e demais equipamentos de TI.</p>
+    </div>
+    <div class="cabecalho-pagina__acoes">
+        <a class="btn btn--contorno" asp-controller="Relatorios" asp-action="Ativos"
+           asp-all-route-data="@Context.Request.Query.ToDictionary(q => q.Key, q => q.Value.ToString())">
+            <svg viewBox="0 0 24 24"><use href="#i-download" /></svg> Exportar CSV
+        </a>
+        @if (podeOperar)
+        {
+            <a class="btn btn--primario" asp-action="Criar">
+                <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg> Novo ativo
+            </a>
+        }
+    </div>
+</div>
+
+@* ---------------------------------------------------------- Resumo por tipo *@
+@if (Model.Resumo.Count > 0)
+{
+    <div class="linha g-2 envolve mb-3">
+        @foreach (var resumo in Model.Resumo.Take(8))
+        {
+            <a class="chip" style="padding:.4rem .7rem"
+               asp-action="Index" asp-route-Tipo="@resumo.Tipo">
+                <svg viewBox="0 0 24 24" width="15" height="15"><use href="#@("i-" + IconeTipoAtivo(resumo.Tipo))" /></svg>
+                @resumo.Descricao
+                <strong class="texto-forte">@resumo.Total</strong>
+            </a>
+        }
+    </div>
+}
+
+@* ---------------------------------------------------------------- Filtros *@
+<form method="get" class="cartao painel-filtros" data-filtro-auto>
+    <div class="cartao__corpo cartao__corpo--compacto painel-filtros__topo">
+        <label class="busca">
+            <svg viewBox="0 0 24 24"><use href="#i-busca" /></svg>
+            <input class="entrada" type="search" name="Busca" value="@Model.Filtro.Busca"
+                   placeholder="Buscar por patrimônio, modelo, série, IMEI, hostname ou colaborador…"
+                   data-busca-instantanea aria-label="Buscar ativos" />
+        </label>
+
+        <select class="entrada" name="Ordenacao" style="width:auto" aria-label="Ordenação">
+            <option value="">Mais recentes</option>
+            <option value="patrimonio" selected="@(Model.Filtro.Ordenacao == "patrimonio")">Patrimônio</option>
+            <option value="modelo" selected="@(Model.Filtro.Ordenacao == "modelo")">Marca / modelo</option>
+            <option value="tipo" selected="@(Model.Filtro.Ordenacao == "tipo")">Tipo</option>
+            <option value="status" selected="@(Model.Filtro.Ordenacao == "status")">Status</option>
+            <option value="valor" selected="@(Model.Filtro.Ordenacao == "valor")">Maior valor</option>
+            <option value="antigos" selected="@(Model.Filtro.Ordenacao == "antigos")">Mais antigos</option>
+        </select>
+
+        <button type="button" class="btn btn--contorno" data-acao="alternar-filtros" data-alvo="filtros-avancados">
+            <svg viewBox="0 0 24 24"><use href="#i-filtro" /></svg>
+            Filtros
+            @if (Model.Filtro.PossuiFiltroAtivo)
+            {
+                <span class="selo selo--primario selo--sem-ponto">ativos</span>
+            }
+        </button>
+
+        @if (Model.Filtro.PossuiFiltroAtivo)
+        {
+            <a class="btn btn--fantasma" asp-action="Index">Limpar</a>
+        }
+    </div>
+
+    <div class="cartao__corpo cartao__corpo--compacto painel-filtros__corpo" id="filtros-avancados"
+         hidden="@(!Model.Filtro.PossuiFiltroAtivo)">
+        <div class="campo">
+            <label>Tipo</label>
+            <select class="entrada" name="Tipo" asp-items='ListaDeEnum<TipoAtivo>(Model.Filtro.Tipo, "Todos os tipos")'></select>
+        </div>
+        <div class="campo">
+            <label>Status</label>
+            <select class="entrada" name="Status" asp-items='ListaDeEnum<StatusAtivo>(Model.Filtro.Status, "Todos os status")'></select>
+        </div>
+        <div class="campo">
+            <label>Condição</label>
+            <select class="entrada" name="Condicao" asp-items='ListaDeEnum<CondicaoAtivo>(Model.Filtro.Condicao, "Todas")'></select>
+        </div>
+        <div class="campo">
+            <label>Departamento</label>
+            <select class="entrada" name="DepartamentoId" asp-items="Model.Listas.Departamentos">
+                <option value="">Todos</option>
+            </select>
+        </div>
+        <div class="campo">
+            <label>Localização</label>
+            <select class="entrada" name="LocalizacaoId" asp-items="Model.Listas.Localizacoes">
+                <option value="">Todas</option>
+            </select>
+        </div>
+        <div class="campo">
+            <label>Em posse de</label>
+            <select class="entrada" name="ColaboradorId" asp-items="Model.Listas.Colaboradores">
+                <option value="">Qualquer colaborador</option>
+            </select>
+        </div>
+        <div class="campo" style="justify-content:flex-end">
+            <label class="caixa-marcacao">
+                <input type="checkbox" name="GarantiaVencendo" value="true" checked="@Model.Filtro.GarantiaVencendo" />
+                <span>Garantia vencendo (60 dias)</span>
+            </label>
+            <label class="caixa-marcacao">
+                <input type="checkbox" name="SemNumeroSerie" value="true" checked="@Model.Filtro.SemNumeroSerie" />
+                <span>Sem número de série</span>
+            </label>
+        </div>
+    </div>
+</form>
+
+@* ---------------------------------------------------------------- Listagem *@
+<section class="cartao">
+    @if (Model.Pagina.TotalItens == 0)
+    {
+        <div class="vazio">
+            <svg viewBox="0 0 24 24"><use href="#i-caixa" /></svg>
+            <h3>Nenhum ativo encontrado</h3>
+            <p>
+                @(Model.Filtro.PossuiFiltroAtivo
+                    ? "Nenhum equipamento corresponde aos filtros aplicados. Tente ampliar a busca."
+                    : "O inventário ainda está vazio. Cadastre o primeiro equipamento de TI.")
+            </p>
+            @if (podeOperar)
+            {
+                <a class="btn btn--primario btn--pequeno" asp-action="Criar">Cadastrar ativo</a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="tabela-wrapper">
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Equipamento</th>
+                        <th>Patrimônio / Série</th>
+                        <th>Status</th>
+                        <th>Condição</th>
+                        <th>Em posse de</th>
+                        <th>Localização</th>
+                        <th class="num">Valor</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ativo in Model.Pagina.Itens)
+                    {
+                        <tr>
+                            <td>
+                                <a class="celula-principal" asp-action="Detalhes" asp-route-id="@ativo.Id">
+                                    <span class="icone-tipo">
+                                        <svg viewBox="0 0 24 24"><use href="#@("i-" + IconeTipoAtivo(ativo.Tipo))" /></svg>
+                                    </span>
+                                    <span class="truncar">
+                                        <strong>@ativo.DescricaoCurta</strong>
+                                        <small>@ativo.Tipo.ObterNome()</small>
+                                    </span>
+                                </a>
+                            </td>
+                            <td>
+                                <div class="mono pequeno texto-forte">@ativo.Patrimonio</div>
+                                @if (!string.IsNullOrWhiteSpace(ativo.NumeroSerie))
+                                {
+                                    <div class="minusculo texto-tenue mono">SN @ativo.NumeroSerie</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(ativo.Imei))
+                                {
+                                    <div class="minusculo texto-tenue mono">IMEI @ativo.Imei</div>
+                                }
+                            </td>
+                            <td><span class="selo selo--@ClasseStatusAtivo(ativo.Status)">@ativo.Status.ObterNome()</span></td>
+                            <td><span class="selo selo--@ClasseCondicao(ativo.Condicao) selo--sem-ponto">@ativo.Condicao.ObterNome()</span></td>
+                            <td>
+                                @if (ativo.ColaboradorAtual is not null)
+                                {
+                                    <a class="celula-principal" asp-controller="Colaboradores" asp-action="Detalhes"
+                                       asp-route-id="@ativo.ColaboradorAtual.Id">
+                                        <span class="avatar avatar--pequeno"
+                                              style="background:@CorAvatar(ativo.ColaboradorAtual.NomeCompleto)">
+                                            @ativo.ColaboradorAtual.Iniciais
+                                        </span>
+                                        <span class="truncar pequeno">@ativo.ColaboradorAtual.PrimeiroNome</span>
+                                    </a>
+                                }
+                                else
+                                {
+                                    <span class="texto-tenue pequeno">— em estoque</span>
+                                }
+                            </td>
+                            <td class="pequeno texto-suave">@(ativo.Localizacao?.Nome ?? "—")</td>
+                            <td class="num pequeno">@(ativo.ValorAquisicao?.ToString("C") ?? "—")</td>
+                            <td>
+                                <div class="acoes-linha">
+                                    <a class="btn btn--fantasma btn--icone btn--pequeno" title="Detalhes"
+                                       asp-action="Detalhes" asp-route-id="@ativo.Id">
+                                        <svg viewBox="0 0 24 24"><use href="#i-olho" /></svg>
+                                    </a>
+                                    @if (podeOperar)
+                                    {
+                                        <a class="btn btn--fantasma btn--icone btn--pequeno" title="Editar"
+                                           asp-action="Editar" asp-route-id="@ativo.Id">
+                                            <svg viewBox="0 0 24 24"><use href="#i-editar" /></svg>
+                                        </a>
+                                        @if (ativo.DisponivelParaEntrega)
+                                        {
+                                            <a class="btn btn--fantasma btn--icone btn--pequeno" title="Entregar a um colaborador"
+                                               asp-controller="Movimentacoes" asp-action="Entregar" asp-route-ativoId="@ativo.Id">
+                                                <svg viewBox="0 0 24 24"><use href="#i-saida" /></svg>
+                                            </a>
+                                        }
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="cartao__rodape">
+            <partial name="_Paginacao" model="PaginacaoModel.De(Model.Pagina)" />
+        </div>
+    }
+</section>

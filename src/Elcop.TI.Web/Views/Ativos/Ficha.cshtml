@@ -1,0 +1,107 @@
+@model DetalhesAtivoViewModel
+@{
+    Layout = "_LayoutImpressao";
+    var ativo = Model.Ativo;
+    ViewData["Titulo"] = $"Ficha do ativo {ativo.Patrimonio}";
+}
+
+<article class="folha">
+    <header class="folha__cabecalho">
+        <img src="~/img/logo-elcop.png" alt="ELCOP" />
+        <div class="crescer">
+            <h1>Ficha de ativo de TI</h1>
+            <span>Emitida em @DateTime.Now.ToString("dd/MM/yyyy 'às' HH:mm") por @(User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value ?? User.Identity?.Name)</span>
+        </div>
+        <div style="text-align:right">
+            <div style="font-size:1.3rem;font-weight:700">@ativo.Patrimonio</div>
+            <div style="font-size:.78rem;color:#6E6E78">@ativo.Tipo.ObterNome()</div>
+        </div>
+    </header>
+
+    <h2>Identificação</h2>
+    <table>
+        <tr><th>Descrição</th><td>@ativo.Marca @ativo.Modelo</td></tr>
+        <tr><th>Número de série</th><td>@(ativo.NumeroSerie ?? "—")</td></tr>
+        @if (ativo.ExigeIdentificacaoMovel)
+        {
+            <tr><th>IMEI</th><td>@(ativo.Imei ?? "—") @(string.IsNullOrWhiteSpace(ativo.Imei2) ? "" : $" / {ativo.Imei2}")</td></tr>
+            <tr><th>Linha / Operadora</th><td>@(ativo.NumeroLinha ?? "—") @(ativo.Operadora is null ? "" : $"· {ativo.Operadora}")</td></tr>
+        }
+        <tr><th>Status</th><td>@ativo.Status.ObterNome() · Condição: @ativo.Condicao.ObterNome()</td></tr>
+        <tr><th>Etiqueta</th><td>@(ativo.Etiqueta ?? "—")</td></tr>
+    </table>
+
+    @if (ativo.ExigeEspecificacaoTecnica)
+    {
+        <h2>Especificação técnica</h2>
+        <table>
+            <tr><th>Processador</th><td>@(ativo.Processador ?? "—")</td></tr>
+            <tr><th>Memória / Armazenamento</th><td>@(ativo.MemoriaRam ?? "—") · @(ativo.Armazenamento ?? "—")</td></tr>
+            <tr><th>Sistema operacional</th><td>@(ativo.SistemaOperacional ?? "—")</td></tr>
+            <tr><th>Hostname / MAC</th><td>@(ativo.Hostname ?? "—") · @(ativo.EnderecoMac ?? "—")</td></tr>
+        </table>
+    }
+
+    <h2>Aquisição e lotação</h2>
+    <table>
+        <tr><th>Fornecedor</th><td>@(ativo.Fornecedor?.Nome ?? "—")</td></tr>
+        <tr><th>Aquisição</th><td>@(ativo.DataAquisicao?.ToString("dd/MM/yyyy") ?? "—") · @(ativo.ValorAquisicao?.ToString("C") ?? "—") · NF @(ativo.NotaFiscal ?? "—")</td></tr>
+        <tr><th>Garantia até</th><td>@(ativo.GarantiaAte?.ToString("dd/MM/yyyy") ?? "—")</td></tr>
+        <tr><th>Departamento</th><td>@(ativo.Departamento?.Nome ?? "—")</td></tr>
+        <tr><th>Localização</th><td>@(ativo.Localizacao?.Nome ?? "—")</td></tr>
+        <tr><th>Acessórios</th><td>@(string.IsNullOrWhiteSpace(ativo.Acessorios) ? "—" : ativo.Acessorios)</td></tr>
+    </table>
+
+    <h2>Situação atual</h2>
+    <table>
+        <tr>
+            <th>Responsável</th>
+            <td>
+                @if (Model.PosseAtual?.Colaborador is { } responsavel)
+                {
+                    @($"{responsavel.NomeCompleto} · matrícula {responsavel.Matricula} · desde {Model.PosseAtual.DataRetirada:dd/MM/yyyy}")
+                }
+                else
+                {
+                    <text>Equipamento em estoque de TI</text>
+                }
+            </td>
+        </tr>
+    </table>
+
+    @if (Model.Historico.Count > 0)
+    {
+        <h2>Histórico de posse</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:auto">Protocolo</th><th style="width:auto">Colaborador</th>
+                    <th style="width:auto">Retirada</th><th style="width:auto">Devolução</th><th style="width:auto">Situação</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var movimentacao in Model.Historico)
+                {
+                    <tr>
+                        <td>@movimentacao.Protocolo</td>
+                        <td>@movimentacao.Colaborador?.NomeCompleto</td>
+                        <td>@movimentacao.DataRetirada.ToString("dd/MM/yyyy")</td>
+                        <td>@(movimentacao.DataDevolucao?.ToString("dd/MM/yyyy") ?? "—")</td>
+                        <td>@movimentacao.Status.ObterNome()</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(ativo.Observacoes))
+    {
+        <h2>Observações</h2>
+        <p class="folha__termo">@ativo.Observacoes</p>
+    }
+
+    <div class="folha__assinaturas">
+        <div class="folha__assinatura">Responsável de TI</div>
+        <div class="folha__assinatura">Conferente</div>
+    </div>
+</article>

@@ -1,0 +1,247 @@
+@model AtivoFormViewModel
+@{
+    ViewData["Titulo"] = Model.Titulo;
+    ViewData["Subtitulo"] = Model.Edicao ? Model.Ativo.Identificacao : "Cadastro de equipamento no inventário";
+}
+
+<div class="migalhas">
+    <a asp-action="Index">Ativos</a> <span>/</span> <span>@Model.Titulo</span>
+</div>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>@Model.Titulo</h1>
+        <p>Campos marcados com * são obrigatórios. Os blocos de mobilidade e hardware aparecem conforme o tipo escolhido.</p>
+    </div>
+</div>
+
+<form asp-action="@(Model.Edicao ? "Editar" : "Criar")" asp-route-id="@(Model.Edicao ? Model.Ativo.Id : null)"
+      method="post" enctype="multipart/form-data" novalidate>
+    <input type="hidden" asp-for="Ativo.Id" />
+    <input type="hidden" asp-for="Ativo.ColaboradorAtualId" />
+    <input type="hidden" asp-for="Ativo.CriadoEm" />
+    @* Preserva a foto já cadastrada quando o formulário é enviado sem trocar a imagem. *@
+    <input type="hidden" asp-for="Ativo.FotoUrl" />
+
+    <div asp-validation-summary="ModelOnly" class="alerta alerta--critico mb-3"
+         style="@(ViewData.ModelState.ErrorCount > 0 ? "" : "display:none")">
+        <svg viewBox="0 0 24 24"><use href="#i-alerta" /></svg>
+        <div class="validation-summary-errors crescer"></div>
+    </div>
+
+    <fieldset class="secao">
+        <legend><svg viewBox="0 0 24 24"><use href="#i-etiqueta" /></svg> Identificação</legend>
+
+        <partial name="_CampoFoto" model="Model.Ativo.FotoUrl" />
+
+        <div class="form-grade">
+            <div class="campo col-3">
+                <label asp-for="Ativo.Patrimonio"></label>
+                <input asp-for="Ativo.Patrimonio" class="entrada mono" placeholder="TI-000001"
+                       data-verificar="@Url.Action("ValidarPatrimonio")" data-verificar-campo="patrimonio" />
+                <span asp-validation-for="Ativo.Patrimonio"></span>
+                <span class="field-validation-error" data-verificar-mensagem></span>
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Ativo.Tipo"></label>
+                <select asp-for="Ativo.Tipo" class="entrada" id="campo-tipo"
+                        asp-items="ListaDeEnum<TipoAtivo>(Model.Ativo.Tipo)"></select>
+                <span asp-validation-for="Ativo.Tipo"></span>
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Ativo.Marca"></label>
+                <input asp-for="Ativo.Marca" class="entrada" placeholder="Dell, Samsung, HP…" list="marcas-sugeridas" />
+                <datalist id="marcas-sugeridas">
+                    <option value="Dell"></option><option value="Lenovo"></option><option value="HP"></option>
+                    <option value="Samsung"></option><option value="LG"></option><option value="Motorola"></option>
+                    <option value="Apple"></option><option value="Epson"></option><option value="Intelbras"></option>
+                    <option value="Logitech"></option><option value="APC"></option><option value="TP-Link"></option>
+                </datalist>
+                <span asp-validation-for="Ativo.Marca"></span>
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Ativo.Modelo"></label>
+                <input asp-for="Ativo.Modelo" class="entrada" placeholder="Latitude 5440" />
+                <span asp-validation-for="Ativo.Modelo"></span>
+            </div>
+
+            <div class="campo col-4">
+                <label asp-for="Ativo.NumeroSerie"></label>
+                <input asp-for="Ativo.NumeroSerie" class="entrada mono" placeholder="Serial do fabricante"
+                       data-verificar="@Url.Action("ValidarNumeroSerie")" data-verificar-campo="numeroSerie" />
+                <span class="ajuda">Identificador único do fabricante — usado para conferência na devolução.</span>
+                <span asp-validation-for="Ativo.NumeroSerie"></span>
+                <span class="field-validation-error" data-verificar-mensagem></span>
+            </div>
+            <div class="campo col-4">
+                <label asp-for="Ativo.Etiqueta"></label>
+                <input asp-for="Ativo.Etiqueta" class="entrada" placeholder="Código da etiqueta física" />
+            </div>
+            <div class="campo col-4">
+                <label asp-for="Ativo.Cor"></label>
+                <input asp-for="Ativo.Cor" class="entrada" placeholder="Preto, cinza…" />
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="secao" id="bloco-mobilidade">
+        <legend><svg viewBox="0 0 24 24"><use href="#i-celular" /></svg> Mobilidade (celular, tablet, bodycam, chip)</legend>
+        <div class="form-grade">
+            <div class="campo col-3">
+                <label asp-for="Ativo.Imei"></label>
+                <input asp-for="Ativo.Imei" class="entrada mono" data-mascara="imei" placeholder="Somente dígitos" />
+                <span asp-validation-for="Ativo.Imei"></span>
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Ativo.Imei2"></label>
+                <input asp-for="Ativo.Imei2" class="entrada mono" data-mascara="imei" placeholder="Segundo chip" />
+                <span asp-validation-for="Ativo.Imei2"></span>
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Ativo.NumeroLinha"></label>
+                <input asp-for="Ativo.NumeroLinha" class="entrada" data-mascara="telefone" placeholder="(00) 00000-0000" />
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Ativo.Operadora"></label>
+                <input asp-for="Ativo.Operadora" class="entrada" placeholder="Vivo, Claro, TIM…" />
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="secao" id="bloco-tecnico">
+        <legend><svg viewBox="0 0 24 24"><use href="#i-notebook" /></svg> Especificação técnica</legend>
+        <div class="form-grade">
+            <div class="campo col-4">
+                <label asp-for="Ativo.Processador"></label>
+                <input asp-for="Ativo.Processador" class="entrada" placeholder="Intel Core i5-1335U" />
+            </div>
+            <div class="campo col-2">
+                <label asp-for="Ativo.MemoriaRam"></label>
+                <input asp-for="Ativo.MemoriaRam" class="entrada" placeholder="16 GB DDR4" />
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Ativo.Armazenamento"></label>
+                <input asp-for="Ativo.Armazenamento" class="entrada" placeholder="512 GB SSD NVMe" />
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Ativo.SistemaOperacional"></label>
+                <input asp-for="Ativo.SistemaOperacional" class="entrada" placeholder="Windows 11 Pro" />
+            </div>
+            <div class="campo col-4">
+                <label asp-for="Ativo.Hostname"></label>
+                <input asp-for="Ativo.Hostname" class="entrada mono" placeholder="ELCOP-NOT001" />
+            </div>
+            <div class="campo col-4">
+                <label asp-for="Ativo.EnderecoMac"></label>
+                <input asp-for="Ativo.EnderecoMac" class="entrada mono" placeholder="00:1A:2B:3C:4D:5E" />
+            </div>
+            <div class="campo col-4">
+                <label asp-for="Ativo.Tamanho"></label>
+                <input asp-for="Ativo.Tamanho" class="entrada" placeholder="24&quot;, 15,6&quot;…" />
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="secao">
+        <legend><svg viewBox="0 0 24 24"><use href="#i-local" /></svg> Situação e lotação</legend>
+        <div class="form-grade">
+            <div class="campo col-3">
+                <label asp-for="Ativo.Status"></label>
+                <select asp-for="Ativo.Status" class="entrada" asp-items="ListaDeEnum<StatusAtivo>(Model.Ativo.Status)"></select>
+                <span class="ajuda">A posse é controlada pelas movimentações, não por este campo.</span>
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Ativo.Condicao"></label>
+                <select asp-for="Ativo.Condicao" class="entrada" asp-items="ListaDeEnum<CondicaoAtivo>(Model.Ativo.Condicao)"></select>
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Ativo.DepartamentoId"></label>
+                <select asp-for="Ativo.DepartamentoId" class="entrada" asp-items="Model.Listas.Departamentos">
+                    <option value="">Não informado</option>
+                </select>
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Ativo.LocalizacaoId"></label>
+                <select asp-for="Ativo.LocalizacaoId" class="entrada" asp-items="Model.Listas.Localizacoes">
+                    <option value="">Não informada</option>
+                </select>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="secao">
+        <legend><svg viewBox="0 0 24 24"><use href="#i-dinheiro" /></svg> Aquisição e garantia</legend>
+        <div class="form-grade">
+            <div class="campo col-3">
+                <label asp-for="Ativo.FornecedorId"></label>
+                <select asp-for="Ativo.FornecedorId" class="entrada" asp-items="Model.Listas.Fornecedores">
+                    <option value="">Não informado</option>
+                </select>
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Ativo.DataAquisicao"></label>
+                <input asp-for="Ativo.DataAquisicao" class="entrada" type="date" />
+            </div>
+            <div class="campo col-2">
+                <label asp-for="Ativo.ValorAquisicao"></label>
+                <input asp-for="Ativo.ValorAquisicao" class="entrada" type="number" step="0.01" min="0" placeholder="0,00" />
+                <span asp-validation-for="Ativo.ValorAquisicao"></span>
+            </div>
+            <div class="campo col-2">
+                <label asp-for="Ativo.NotaFiscal"></label>
+                <input asp-for="Ativo.NotaFiscal" class="entrada" placeholder="NF-00000" />
+            </div>
+            <div class="campo col-2">
+                <label asp-for="Ativo.GarantiaAte"></label>
+                <input asp-for="Ativo.GarantiaAte" class="entrada" type="date" />
+            </div>
+            <div class="campo col-4">
+                <label asp-for="Ativo.Contrato"></label>
+                <input asp-for="Ativo.Contrato" class="entrada" placeholder="Contrato de locação, se houver" />
+            </div>
+            <div class="campo col-8">
+                <label asp-for="Ativo.Acessorios"></label>
+                <input asp-for="Ativo.Acessorios" class="entrada"
+                       placeholder="Fonte, capa, cabo, base de carga…" />
+                <span class="ajuda">Sugerido automaticamente no termo de entrega.</span>
+            </div>
+            <div class="campo col-12">
+                <label asp-for="Ativo.Observacoes"></label>
+                <textarea asp-for="Ativo.Observacoes" class="entrada" rows="3"
+                          placeholder="Informações relevantes sobre o equipamento"></textarea>
+            </div>
+        </div>
+    </fieldset>
+
+    <div class="barra-acoes">
+        <a class="btn btn--contorno" asp-action="Index">Cancelar</a>
+        <button type="submit" class="btn btn--primario">
+            <svg viewBox="0 0 24 24"><use href="#i-check" /></svg>
+            @(Model.Edicao ? "Salvar alterações" : "Cadastrar ativo")
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Mostra apenas os blocos que fazem sentido para o tipo de ativo escolhido.
+        (function () {
+            var MOBILIDADE = ["Celular", "Tablet", "Bodycam", "ChipLinhaMovel"];
+            var TECNICO = ["Notebook", "Desktop", "Servidor", "Tablet", "Monitor"];
+
+            var tipo = document.getElementById("campo-tipo");
+            var mobilidade = document.getElementById("bloco-mobilidade");
+            var tecnico = document.getElementById("bloco-tecnico");
+
+            function atualizar() {
+                var valor = tipo.options[tipo.selectedIndex].value;
+                mobilidade.hidden = MOBILIDADE.indexOf(valor) === -1;
+                tecnico.hidden = TECNICO.indexOf(valor) === -1;
+            }
+
+            tipo.addEventListener("change", atualizar);
+            atualizar();
+        })();
+    </script>
+}

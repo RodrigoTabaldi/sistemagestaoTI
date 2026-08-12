@@ -1,0 +1,299 @@
+@model CadastrosViewModel
+@{
+    ViewData["Titulo"] = "Cadastros de apoio";
+    ViewData["Subtitulo"] = "Departamentos, localizações e fornecedores";
+}
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1><svg viewBox="0 0 24 24" width="24" height="24" class="texto-marca"><use href="#i-config" /></svg> Cadastros de apoio</h1>
+        <p>Listas que alimentam os formulários de ativos, colaboradores e demandas.</p>
+    </div>
+</div>
+
+<div class="abas" data-abas="cadastros" role="tablist">
+    <button type="button" class="aba @(Model.AbaAtiva == "departamentos" ? "ativa" : "")" data-aba="departamentos">
+        Departamentos <span class="chip">@Model.Departamentos.Count</span>
+    </button>
+    <button type="button" class="aba @(Model.AbaAtiva == "localizacoes" ? "ativa" : "")" data-aba="localizacoes">
+        Localizações <span class="chip">@Model.Localizacoes.Count</span>
+    </button>
+    <button type="button" class="aba @(Model.AbaAtiva == "fornecedores" ? "ativa" : "")" data-aba="fornecedores">
+        Fornecedores <span class="chip">@Model.Fornecedores.Count</span>
+    </button>
+</div>
+
+@* ------------------------------------------------------------ Departamentos *@
+<div data-painel="departamentos" data-grupo="cadastros" hidden="@(Model.AbaAtiva != "departamentos")">
+    <div class="grade-painel">
+        <section class="cartao">
+            <div class="cartao__cabecalho"><h2>Departamentos cadastrados</h2></div>
+            @if (Model.Departamentos.Count == 0)
+            {
+                <div class="vazio">
+                    <svg viewBox="0 0 24 24"><use href="#i-predio" /></svg>
+                    <h3>Nenhum departamento</h3>
+                    <p>Cadastre os setores da empresa para organizar ativos e colaboradores.</p>
+                </div>
+            }
+            else
+            {
+                <div class="tabela-wrapper">
+                    <table class="tabela">
+                        <thead>
+                            <tr><th>Nome</th><th>Sigla</th><th>Centro de custo</th><th>Responsável</th><th>Situação</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var departamento in Model.Departamentos)
+                            {
+                                <tr>
+                                    <td class="pequeno negrito texto-forte">@departamento.Nome</td>
+                                    <td class="mono pequeno">@(departamento.Sigla ?? "—")</td>
+                                    <td class="mono pequeno">@(departamento.CentroCusto ?? "—")</td>
+                                    <td class="pequeno">@(departamento.Responsavel ?? "—")</td>
+                                    <td>
+                                        <span class="selo selo--@(departamento.Habilitado ? "sucesso" : "neutro")">
+                                            @(departamento.Habilitado ? "Ativo" : "Inativo")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form asp-action="ExcluirDepartamento" asp-route-id="@departamento.Id" method="post"
+                                              class="acoes-linha"
+                                              data-confirmar="@($"Excluir o departamento \"{departamento.Nome}\"?")"
+                                              data-confirmar-titulo="Excluir departamento" data-confirmar-perigo="true">
+                                            <button type="submit" class="btn btn--fantasma btn--icone btn--pequeno" title="Excluir">
+                                                <svg viewBox="0 0 24 24"><use href="#i-lixeira" /></svg>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        <form asp-action="SalvarDepartamento" method="post" class="cartao" style="align-self:start">
+            <div class="cartao__cabecalho"><h2>Novo departamento</h2></div>
+            <div class="cartao__corpo pilha g-3">
+                <div class="campo">
+                    <label for="dep-nome">Nome *</label>
+                    <input id="dep-nome" name="Nome" class="entrada" required maxlength="120" placeholder="Tecnologia da Informação" />
+                </div>
+                <div class="campo">
+                    <label for="dep-sigla">Sigla</label>
+                    <input id="dep-sigla" name="Sigla" class="entrada" maxlength="20" placeholder="TI" />
+                </div>
+                <div class="campo">
+                    <label for="dep-cc">Centro de custo</label>
+                    <input id="dep-cc" name="CentroCusto" class="entrada" maxlength="40" placeholder="CC-1010" />
+                </div>
+                <div class="campo">
+                    <label for="dep-resp">Responsável</label>
+                    <input id="dep-resp" name="Responsavel" class="entrada" maxlength="120" />
+                </div>
+                <label class="interruptor">
+                    <input type="checkbox" name="Habilitado" value="true" checked />
+                    <span class="interruptor__trilho"></span>
+                    <span class="pequeno">Disponível nos formulários</span>
+                </label>
+            </div>
+            <div class="cartao__rodape linha fim">
+                <button type="submit" class="btn btn--primario btn--pequeno">
+                    <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg> Adicionar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* ------------------------------------------------------------- Localizações *@
+<div data-painel="localizacoes" data-grupo="cadastros" hidden="@(Model.AbaAtiva != "localizacoes")">
+    <div class="grade-painel">
+        <section class="cartao">
+            <div class="cartao__cabecalho"><h2>Localizações cadastradas</h2></div>
+            @if (Model.Localizacoes.Count == 0)
+            {
+                <div class="vazio">
+                    <svg viewBox="0 0 24 24"><use href="#i-local" /></svg>
+                    <h3>Nenhuma localização</h3>
+                    <p>Cadastre unidades, salas e almoxarifados onde os ativos ficam.</p>
+                </div>
+            }
+            else
+            {
+                <div class="tabela-wrapper">
+                    <table class="tabela">
+                        <thead>
+                            <tr><th>Local</th><th>Unidade</th><th>Cidade / UF</th><th>Situação</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var localizacao in Model.Localizacoes)
+                            {
+                                <tr>
+                                    <td class="pequeno negrito texto-forte">@localizacao.Nome</td>
+                                    <td class="pequeno">@(localizacao.Unidade ?? "—")</td>
+                                    <td class="pequeno">@(localizacao.Cidade ?? "—")@(localizacao.Uf is null ? "" : $" / {localizacao.Uf}")</td>
+                                    <td>
+                                        <span class="selo selo--@(localizacao.Habilitado ? "sucesso" : "neutro")">
+                                            @(localizacao.Habilitado ? "Ativa" : "Inativa")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form asp-action="ExcluirLocalizacao" asp-route-id="@localizacao.Id" method="post"
+                                              class="acoes-linha"
+                                              data-confirmar="@($"Excluir a localização \"{localizacao.Nome}\"?")"
+                                              data-confirmar-titulo="Excluir localização" data-confirmar-perigo="true">
+                                            <button type="submit" class="btn btn--fantasma btn--icone btn--pequeno" title="Excluir">
+                                                <svg viewBox="0 0 24 24"><use href="#i-lixeira" /></svg>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        <form asp-action="SalvarLocalizacao" method="post" class="cartao" style="align-self:start">
+            <div class="cartao__cabecalho"><h2>Nova localização</h2></div>
+            <div class="cartao__corpo pilha g-3">
+                <div class="campo">
+                    <label for="loc-nome">Nome *</label>
+                    <input id="loc-nome" name="Nome" class="entrada" required maxlength="120" placeholder="Almoxarifado de TI" />
+                </div>
+                <div class="campo">
+                    <label for="loc-unidade">Unidade / Filial</label>
+                    <input id="loc-unidade" name="Unidade" class="entrada" maxlength="120" placeholder="Matriz" />
+                </div>
+                <div class="campo">
+                    <label for="loc-endereco">Endereço</label>
+                    <input id="loc-endereco" name="Endereco" class="entrada" maxlength="200" />
+                </div>
+                <div class="form-grade">
+                    <div class="campo col-8">
+                        <label for="loc-cidade">Cidade</label>
+                        <input id="loc-cidade" name="Cidade" class="entrada" maxlength="80" />
+                    </div>
+                    <div class="campo col-4">
+                        <label for="loc-uf">UF</label>
+                        <input id="loc-uf" name="Uf" class="entrada" maxlength="2" placeholder="RS" style="text-transform:uppercase" />
+                    </div>
+                </div>
+                <label class="interruptor">
+                    <input type="checkbox" name="Habilitado" value="true" checked />
+                    <span class="interruptor__trilho"></span>
+                    <span class="pequeno">Disponível nos formulários</span>
+                </label>
+            </div>
+            <div class="cartao__rodape linha fim">
+                <button type="submit" class="btn btn--primario btn--pequeno">
+                    <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg> Adicionar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* ------------------------------------------------------------- Fornecedores *@
+<div data-painel="fornecedores" data-grupo="cadastros" hidden="@(Model.AbaAtiva != "fornecedores")">
+    <div class="grade-painel">
+        <section class="cartao">
+            <div class="cartao__cabecalho"><h2>Fornecedores cadastrados</h2></div>
+            @if (Model.Fornecedores.Count == 0)
+            {
+                <div class="vazio">
+                    <svg viewBox="0 0 24 24"><use href="#i-caixa" /></svg>
+                    <h3>Nenhum fornecedor</h3>
+                    <p>Cadastre os fornecedores para vincular às aquisições dos ativos.</p>
+                </div>
+            }
+            else
+            {
+                <div class="tabela-wrapper">
+                    <table class="tabela">
+                        <thead>
+                            <tr><th>Razão social</th><th>CNPJ</th><th>Contato</th><th>Situação</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var fornecedor in Model.Fornecedores)
+                            {
+                                <tr>
+                                    <td class="pequeno negrito texto-forte">@fornecedor.Nome</td>
+                                    <td class="mono pequeno">@(fornecedor.Cnpj ?? "—")</td>
+                                    <td class="pequeno">
+                                        @(fornecedor.Contato ?? "—")
+                                        @if (!string.IsNullOrWhiteSpace(fornecedor.Telefone))
+                                        {
+                                            <div class="minusculo texto-tenue">@fornecedor.Telefone</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span class="selo selo--@(fornecedor.Habilitado ? "sucesso" : "neutro")">
+                                            @(fornecedor.Habilitado ? "Ativo" : "Inativo")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <form asp-action="ExcluirFornecedor" asp-route-id="@fornecedor.Id" method="post"
+                                              class="acoes-linha"
+                                              data-confirmar="@($"Excluir o fornecedor \"{fornecedor.Nome}\"?")"
+                                              data-confirmar-titulo="Excluir fornecedor" data-confirmar-perigo="true">
+                                            <button type="submit" class="btn btn--fantasma btn--icone btn--pequeno" title="Excluir">
+                                                <svg viewBox="0 0 24 24"><use href="#i-lixeira" /></svg>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        <form asp-action="SalvarFornecedor" method="post" class="cartao" style="align-self:start">
+            <div class="cartao__cabecalho"><h2>Novo fornecedor</h2></div>
+            <div class="cartao__corpo pilha g-3">
+                <div class="campo">
+                    <label for="for-nome">Razão social *</label>
+                    <input id="for-nome" name="Nome" class="entrada" required maxlength="160" />
+                </div>
+                <div class="campo">
+                    <label for="for-cnpj">CNPJ</label>
+                    <input id="for-cnpj" name="Cnpj" class="entrada mono" data-mascara="cnpj" placeholder="00.000.000/0000-00" />
+                </div>
+                <div class="campo">
+                    <label for="for-contato">Contato</label>
+                    <input id="for-contato" name="Contato" class="entrada" maxlength="120" />
+                </div>
+                <div class="form-grade">
+                    <div class="campo col-6">
+                        <label for="for-tel">Telefone</label>
+                        <input id="for-tel" name="Telefone" class="entrada" data-mascara="telefone" />
+                    </div>
+                    <div class="campo col-6">
+                        <label for="for-email">E-mail</label>
+                        <input id="for-email" name="Email" class="entrada" type="email" />
+                    </div>
+                </div>
+                <div class="campo">
+                    <label for="for-obs">Observações</label>
+                    <textarea id="for-obs" name="Observacoes" class="entrada" rows="2"></textarea>
+                </div>
+                <label class="interruptor">
+                    <input type="checkbox" name="Habilitado" value="true" checked />
+                    <span class="interruptor__trilho"></span>
+                    <span class="pequeno">Disponível nos formulários</span>
+                </label>
+            </div>
+            <div class="cartao__rodape linha fim">
+                <button type="submit" class="btn btn--primario btn--pequeno">
+                    <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg> Adicionar
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

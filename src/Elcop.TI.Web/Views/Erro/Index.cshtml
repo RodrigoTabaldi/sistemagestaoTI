@@ -1,0 +1,32 @@
+@model ErroViewModel
+@{
+    Layout = User.Identity?.IsAuthenticated == true ? "_Layout" : "_LayoutAutenticacao";
+    ViewData["Titulo"] = Model.Titulo;
+}
+
+<div class="linha centro" style="min-height:60vh;padding:2rem 1rem">
+    <div style="text-align:center;max-width:520px">
+        <div style="font-size:5.5rem;font-weight:800;line-height:1;color:var(--marca-vinho);opacity:.18">
+            @Model.CodigoStatus
+        </div>
+
+        <h1 class="mb-2" style="margin-top:-1.4rem">@Model.Titulo</h1>
+        <p class="texto-suave mb-4">@Model.Mensagem</p>
+
+        <div class="linha centro g-2">
+            <a class="btn btn--primario" asp-controller="Painel" asp-action="Index">
+                <svg viewBox="0 0 24 24"><use href="#i-painel" /></svg> Ir para o painel
+            </a>
+            <a class="btn btn--contorno" href="javascript:history.back()">
+                <svg viewBox="0 0 24 24"><use href="#i-seta-esquerda" /></svg> Voltar
+            </a>
+        </div>
+
+        @if (Model.MostrarRequestId)
+        {
+            <p class="minusculo texto-tenue mt-4" style="margin-bottom:0">
+                Código de rastreio: <span class="mono">@Model.RequestId</span>
+            </p>
+        }
+    </div>
+</div>

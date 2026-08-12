@@ -1,0 +1,276 @@
+@model DetalhesColaboradorViewModel
+@{
+    var colaborador = Model.Colaborador;
+    ViewData["Titulo"] = colaborador.NomeCompleto;
+    ViewData["Subtitulo"] = $"Matrícula {colaborador.Matricula}";
+    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+}
+
+<div class="migalhas">
+    <a asp-action="Index">Colaboradores</a> <span>/</span> <span>@colaborador.PrimeiroNome</span>
+</div>
+
+<div class="cabecalho-pagina">
+    <div class="linha g-3">
+        @if (!string.IsNullOrWhiteSpace(colaborador.FotoUrl))
+        {
+            <img class="miniatura miniatura--redonda" src="@colaborador.FotoUrl"
+                 alt="Foto de @colaborador.NomeCompleto" />
+        }
+        else
+        {
+            <span class="avatar avatar--grande" style="background:@CorAvatar(colaborador.NomeCompleto)">
+                @colaborador.Iniciais
+            </span>
+        }
+        <div>
+            <h1>@colaborador.NomeCompleto</h1>
+            <p class="linha g-2 envolve">
+                <span class="mono">@colaborador.Matricula</span>
+                <span class="selo selo--@ClasseStatusColaborador(colaborador.Status)">@colaborador.Status.ObterNome()</span>
+                @if (colaborador.Departamento is not null)
+                {
+                    <span class="chip">@colaborador.Departamento.Nome</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(colaborador.Cargo))
+                {
+                    <span class="texto-suave">@colaborador.Cargo</span>
+                }
+            </p>
+        </div>
+    </div>
+
+    <div class="cabecalho-pagina__acoes">
+        @if (podeOperar)
+        {
+            @if (colaborador.PodeReceberAtivos)
+            {
+                <a class="btn btn--primario" asp-controller="Movimentacoes" asp-action="Entregar"
+                   asp-route-colaboradorId="@colaborador.Id">
+                    <svg viewBox="0 0 24 24"><use href="#i-saida" /></svg> Entregar ativo
+                </a>
+            }
+            <a class="btn btn--contorno" asp-controller="Demandas" asp-action="Criar"
+               asp-route-solicitanteId="@colaborador.Id">
+                <svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg> Abrir demanda
+            </a>
+            <div class="suspenso">
+                <button type="button" class="btn btn--contorno" data-suspenso="menu-colaborador">Mais ações</button>
+                <div class="suspenso__conteudo" id="menu-colaborador" hidden>
+                    <a class="suspenso__item" asp-action="Editar" asp-route-id="@colaborador.Id">
+                        <svg viewBox="0 0 24 24"><use href="#i-editar" /></svg> Editar cadastro
+                    </a>
+                    <div class="suspenso__separador"></div>
+                    <form asp-action="Excluir" asp-route-id="@colaborador.Id" method="post"
+                          data-confirmar="@($"O cadastro de {colaborador.NomeCompleto} será removido. Só é possível excluir quem não está com ativos em posse.")"
+                          data-confirmar-titulo="Excluir colaborador" data-confirmar-ok="Excluir" data-confirmar-perigo="true">
+                        <button type="submit" class="suspenso__item suspenso__item--perigo">
+                            <svg viewBox="0 0 24 24"><use href="#i-lixeira" /></svg> Excluir cadastro
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="grade-kpi mb-4">
+    <article class="kpi" style="--kpi-cor:var(--marca-vinho)">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-caixa" /></svg></span>
+            <span class="kpi__rotulo">Ativos em posse</span>
+        </div>
+        <div class="kpi__valor" data-contador="@Model.AtivosEmPosse.Count">0</div>
+        <div class="kpi__nota">
+            valor total @(Model.AtivosEmPosse.Sum(a => a.ValorAquisicao ?? 0).ToString("C"))
+        </div>
+    </article>
+
+    <article class="kpi" style="--kpi-cor:var(--cor-info)">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-troca" /></svg></span>
+            <span class="kpi__rotulo">Movimentações</span>
+        </div>
+        <div class="kpi__valor" data-contador="@Model.Historico.Count">0</div>
+        <div class="kpi__nota">histórico completo de retiradas</div>
+    </article>
+
+    <article class="kpi" style="--kpi-cor:var(--cor-atencao)">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg></span>
+            <span class="kpi__rotulo">Demandas abertas</span>
+        </div>
+        <div class="kpi__valor" data-contador="@Model.Demandas.Count(d => !d.Encerrada)">0</div>
+        <div class="kpi__nota">@Model.Demandas.Count solicitação(ões) no total</div>
+    </article>
+</div>
+
+<div class="grade-painel">
+    <div class="pilha g-4">
+        <section class="cartao">
+            <div class="cartao__cabecalho">
+                <h2>Ativos em posse</h2>
+                <div class="acoes"><span class="chip">@Model.AtivosEmPosse.Count item(ns)</span></div>
+            </div>
+
+            @if (Model.AtivosEmPosse.Count == 0)
+            {
+                <div class="vazio">
+                    <svg viewBox="0 0 24 24"><use href="#i-caixa" /></svg>
+                    <h3>Nenhum equipamento em posse</h3>
+                    <p>Este colaborador não está com nenhum ativo de TI no momento.</p>
+                    @if (podeOperar && colaborador.PodeReceberAtivos)
+                    {
+                        <a class="btn btn--primario btn--pequeno" asp-controller="Movimentacoes"
+                           asp-action="Entregar" asp-route-colaboradorId="@colaborador.Id">Entregar ativo</a>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="tabela-wrapper">
+                    <table class="tabela">
+                        <thead>
+                            <tr><th>Equipamento</th><th>Patrimônio</th><th>Condição</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ativo in Model.AtivosEmPosse)
+                            {
+                                <tr>
+                                    <td>
+                                        <a class="celula-principal" asp-controller="Ativos" asp-action="Detalhes"
+                                           asp-route-id="@ativo.Id">
+                                            <span class="icone-tipo">
+                                                <svg viewBox="0 0 24 24"><use href="#@("i-" + IconeTipoAtivo(ativo.Tipo))" /></svg>
+                                            </span>
+                                            <span class="truncar">
+                                                <strong>@ativo.DescricaoCurta</strong>
+                                                <small>@ativo.Tipo.ObterNome()</small>
+                                            </span>
+                                        </a>
+                                    </td>
+                                    <td class="mono pequeno">@ativo.Patrimonio</td>
+                                    <td><span class="selo selo--@ClasseCondicao(ativo.Condicao) selo--sem-ponto">@ativo.Condicao.ObterNome()</span></td>
+                                    <td>
+                                        @{
+                                            var termoAberto = Model.Historico.FirstOrDefault(m => m.AtivoId == ativo.Id && m.EstaEmAberto);
+                                        }
+                                        @if (podeOperar && termoAberto is not null)
+                                        {
+                                            <div class="acoes-linha">
+                                                <a class="btn btn--suave btn--pequeno" asp-controller="Movimentacoes"
+                                                   asp-action="Devolver" asp-route-id="@termoAberto.Id">Devolver</a>
+                                            </div>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        <section class="cartao">
+            <div class="cartao__cabecalho"><h2>Histórico de movimentações</h2></div>
+
+            @if (Model.Historico.Count == 0)
+            {
+                <div class="cartao__corpo"><p class="texto-tenue pequeno" style="margin:0">Nenhuma movimentação registrada.</p></div>
+            }
+            else
+            {
+                <div class="tabela-wrapper">
+                    <table class="tabela">
+                        <thead>
+                            <tr><th>Protocolo</th><th>Equipamento</th><th>Retirada</th><th>Devolução</th><th>Situação</th><th></th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var movimentacao in Model.Historico)
+                            {
+                                <tr>
+                                    <td class="mono pequeno">@movimentacao.Protocolo</td>
+                                    <td class="pequeno">
+                                        @movimentacao.Ativo?.DescricaoCurta
+                                        <div class="minusculo texto-tenue mono">@movimentacao.Ativo?.Patrimonio</div>
+                                    </td>
+                                    <td class="pequeno">@movimentacao.DataRetirada.ToString("dd/MM/yyyy")</td>
+                                    <td class="pequeno">@(movimentacao.DataDevolucao?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td>
+                                        <span class="selo selo--@ClasseStatusMovimentacao(movimentacao.Status)">
+                                            @movimentacao.Status.ObterNome()
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="acoes-linha">
+                                            <a class="btn btn--fantasma btn--icone btn--pequeno" title="Ver termo"
+                                               asp-controller="Movimentacoes" asp-action="Termo" asp-route-id="@movimentacao.Id">
+                                                <svg viewBox="0 0 24 24"><use href="#i-impressao" /></svg>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    </div>
+
+    <div class="pilha g-4">
+        <section class="cartao">
+            <div class="cartao__cabecalho"><h2>Dados cadastrais</h2></div>
+            <div class="cartao__corpo">
+                <dl class="lista-dados">
+                    <dt>E-mail corporativo</dt><dd>@colaborador.Email</dd>
+                    @if (!string.IsNullOrWhiteSpace(colaborador.EmailPessoal))
+                    {
+                        <dt>E-mail pessoal</dt><dd>@colaborador.EmailPessoal</dd>
+                    }
+                    <dt>Telefone</dt><dd>@(colaborador.Telefone ?? "—")</dd>
+                    <dt>Celular</dt><dd>@(colaborador.Celular ?? "—")</dd>
+                    <dt>CPF</dt><dd class="mono">@(colaborador.Cpf ?? "—")</dd>
+                    <dt>RG</dt><dd class="mono">@(colaborador.Rg ?? "—")</dd>
+                    <dt>Departamento</dt><dd>@(colaborador.Departamento?.Nome ?? "—")</dd>
+                    <dt>Localização</dt><dd>@(colaborador.Localizacao?.Nome ?? "—")</dd>
+                    <dt>Gestor imediato</dt><dd>@(colaborador.GestorImediato ?? "—")</dd>
+                    <dt>Admissão</dt><dd>@(colaborador.DataAdmissao?.ToString("dd/MM/yyyy") ?? "—")</dd>
+                    @if (colaborador.DataDesligamento.HasValue)
+                    {
+                        <dt>Desligamento</dt><dd>@colaborador.DataDesligamento.Value.ToString("dd/MM/yyyy")</dd>
+                    }
+                </dl>
+
+                @if (!string.IsNullOrWhiteSpace(colaborador.Observacoes))
+                {
+                    <div class="alerta alerta--info mt-3">
+                        <svg viewBox="0 0 24 24"><use href="#i-info" /></svg>
+                        <div style="white-space:pre-line">@colaborador.Observacoes</div>
+                    </div>
+                }
+            </div>
+        </section>
+
+        @if (Model.Demandas.Count > 0)
+        {
+            <section class="cartao">
+                <div class="cartao__cabecalho"><h2>Demandas solicitadas</h2></div>
+                <div class="pilha">
+                    @foreach (var demanda in Model.Demandas.Take(8))
+                    {
+                        <a class="cartao__corpo cartao__corpo--compacto linha g-3"
+                           style="border-bottom:1px solid var(--borda)"
+                           asp-controller="Demandas" asp-action="Detalhes" asp-route-id="@demanda.Id">
+                            <span class="selo selo--@ClasseStatusDemanda(demanda.Status)">@demanda.Status.ObterNome()</span>
+                            <span class="crescer truncar">
+                                <strong class="pequeno texto-forte">@demanda.Titulo</strong>
+                                <div class="minusculo texto-tenue mono">@demanda.Codigo</div>
+                            </span>
+                        </a>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+</div>

@@ -1,0 +1,30 @@
+# Build
+bin/
+obj/
+.vs/
+*.user
+
+# Banco de dados local (SQLite) — cada instalação tem o seu
+*.db
+*.db-shm
+*.db-wal
+*.db.demo-backup
+
+# Arquivos enviados pelos usuários (fotos de ativos e colaboradores)
+src/Elcop.TI.Web/wwwroot/uploads/*
+!src/Elcop.TI.Web/wwwroot/uploads/.gitkeep
+
+# Credenciais — nunca versionar
+.env
+.env.*
+!.env.example
+appsettings.*.local.json
+*serviceaccount*.json
+*service-account*.json
+secrets.json
+
+# Ferramentas locais
+.claude/
+
+# Configurações de IA
+.claude/

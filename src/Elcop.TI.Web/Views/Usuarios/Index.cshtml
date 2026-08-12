@@ -1,0 +1,115 @@
+@model List<UsuarioViewModel>
+@{
+    ViewData["Titulo"] = "Usuários do sistema";
+    ViewData["Subtitulo"] = $"{Model.Count} conta(s) de acesso";
+}
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1><svg viewBox="0 0 24 24" width="24" height="24" class="texto-marca"><use href="#i-escudo" /></svg> Usuários do sistema</h1>
+        <p>Contas que operam o sistema. Diferente dos colaboradores, que apenas recebem equipamentos.</p>
+    </div>
+    <div class="cabecalho-pagina__acoes">
+        <a class="btn btn--primario" asp-action="Criar">
+            <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg> Novo usuário
+        </a>
+    </div>
+</div>
+
+<div class="grade-3 mb-4">
+    @foreach (var (perfil, descricao) in Perfis.Descricoes)
+    {
+        <div class="cartao cartao__corpo">
+            <div class="linha g-2 mb-1">
+                <svg viewBox="0 0 24 24" width="17" height="17" class="texto-marca"><use href="#i-escudo" /></svg>
+                <strong class="texto-forte pequeno">@perfil</strong>
+                <span class="chip" style="margin-left:auto">@Model.Count(u => u.Perfil == perfil)</span>
+            </div>
+            <p class="pequeno texto-suave" style="margin:0">@descricao</p>
+        </div>
+    }
+</div>
+
+<form method="get" class="cartao painel-filtros">
+    <div class="cartao__corpo cartao__corpo--compacto painel-filtros__topo">
+        <label class="busca">
+            <svg viewBox="0 0 24 24"><use href="#i-busca" /></svg>
+            <input class="entrada" type="search" name="busca" value="@ViewData["Busca"]"
+                   placeholder="Buscar por nome ou e-mail…" data-busca-instantanea aria-label="Buscar usuários" />
+        </label>
+    </div>
+</form>
+
+<section class="cartao">
+    @if (Model.Count == 0)
+    {
+        <div class="vazio">
+            <svg viewBox="0 0 24 24"><use href="#i-escudo" /></svg>
+            <h3>Nenhum usuário encontrado</h3>
+            <p>Crie contas de acesso para a equipe de TI operar o sistema.</p>
+            <a class="btn btn--primario btn--pequeno" asp-action="Criar">Novo usuário</a>
+        </div>
+    }
+    else
+    {
+        <div class="tabela-wrapper">
+            <table class="tabela">
+                <thead>
+                    <tr><th>Usuário</th><th>E-mail</th><th>Perfil</th><th>Situação</th><th>Último acesso</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var usuario in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="celula-principal">
+                                    <span class="avatar" style="background:@CorAvatar(usuario.NomeCompleto)">
+                                        @string.Concat(usuario.NomeCompleto.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                            .Take(2).Select(p => p[0])).ToUpperInvariant()
+                                    </span>
+                                    <span class="truncar">
+                                        <strong>@usuario.NomeCompleto</strong>
+                                        <small>@(usuario.Cargo ?? "Cargo não informado")</small>
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="pequeno">@usuario.Email</td>
+                            <td>
+                                <span class="selo selo--@(usuario.Perfil == Perfis.Administrador ? "primario" : usuario.Perfil == Perfis.Tecnico ? "info" : "neutro")">
+                                    @usuario.Perfil
+                                </span>
+                            </td>
+                            <td>
+                                <span class="selo selo--@(usuario.Habilitado ? "sucesso" : "neutro")">
+                                    @(usuario.Habilitado ? "Ativo" : "Desativado")
+                                </span>
+                            </td>
+                            <td class="pequeno texto-suave">
+                                @(usuario.UltimoAcesso?.ToString("dd/MM/yyyy HH:mm") ?? "nunca acessou")
+                            </td>
+                            <td>
+                                <div class="acoes-linha">
+                                    <a class="btn btn--fantasma btn--icone btn--pequeno" title="Editar"
+                                       asp-action="Editar" asp-route-id="@usuario.Id">
+                                        <svg viewBox="0 0 24 24"><use href="#i-editar" /></svg>
+                                    </a>
+                                    @if (usuario.Habilitado)
+                                    {
+                                        <form asp-action="Excluir" asp-route-id="@usuario.Id" method="post"
+                                              data-confirmar="@($"O acesso de {usuario.NomeCompleto} será desativado. O histórico de auditoria é preservado.")"
+                                              data-confirmar-titulo="Desativar usuário" data-confirmar-ok="Desativar"
+                                              data-confirmar-perigo="true">
+                                            <button type="submit" class="btn btn--fantasma btn--icone btn--pequeno" title="Desativar">
+                                                <svg viewBox="0 0 24 24"><use href="#i-x" /></svg>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

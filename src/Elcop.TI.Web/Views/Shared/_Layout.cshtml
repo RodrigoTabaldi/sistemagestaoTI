@@ -1,0 +1,109 @@
+@using System.Security.Claims
+@{
+    var nomeUsuario = User.FindFirst(ClaimTypes.GivenName)?.Value ?? User.Identity?.Name ?? "Usuário";
+    var iniciais = User.FindFirst("iniciais")?.Value ?? "?";
+    var cargo = User.FindFirst("cargo")?.Value;
+    var perfil = User.IsInRole(Perfis.Administrador) ? "Administrador"
+        : User.IsInRole(Perfis.Tecnico) ? "Técnico" : "Consulta";
+}
+<!DOCTYPE html>
+<html lang="pt-BR" data-tema="claro">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#8B1F26" />
+    <title>@ViewData["Titulo"] · ELCOP Gestão de TI</title>
+    <link rel="icon" href="~/img/logo-elcop.png" />
+    @* Sem o preload, o peso 400 só começa a baixar depois do CSS e o texto pisca na fonte de sistema. *@
+    <link rel="preload" href="~/fonts/plex-sans-400.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="~/fonts/plex-sans-500.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="~/css/elcop.css" asp-append-version="true" />
+    @await RenderSectionAsync("Estilos", required: false)
+    <script>
+        // Aplica o tema salvo antes da primeira pintura, evitando o "flash" branco.
+        (function () {
+            var t = localStorage.getItem("elcop.tema");
+            if (!t) t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "escuro" : "claro";
+            document.documentElement.setAttribute("data-tema", t);
+        })();
+    </script>
+</head>
+<body>
+    <partial name="_Icones" />
+
+    <div class="app">
+        @await Component.InvokeAsync("MenuLateral")
+
+        <div class="conteudo">
+            <header class="topbar">
+                <button type="button" class="btn btn--fantasma btn--icone abrir-menu" data-acao="abrir-menu"
+                        aria-label="Abrir menu">
+                    <svg viewBox="0 0 24 24" width="20" height="20"><use href="#i-menu" /></svg>
+                </button>
+
+                <div class="topbar__titulo truncar">
+                    <strong>@ViewData["Titulo"]</strong>
+                    @if (ViewData["Subtitulo"] is string subtitulo)
+                    {
+                        <span class="truncar">@subtitulo</span>
+                    }
+                </div>
+
+                <div class="topbar__acoes">
+                    <a class="btn btn--contorno btn--pequeno sem-impressao" asp-controller="Movimentacoes" asp-action="Entregar">
+                        <svg viewBox="0 0 24 24"><use href="#i-saida" /></svg> Entregar ativo
+                    </a>
+
+                    <button type="button" class="btn btn--fantasma btn--icone" data-acao="alternar-tema"
+                            title="Alternar tema (Ctrl+K)" aria-label="Alternar tema">
+                        <svg viewBox="0 0 24 24" width="19" height="19" data-tema-icone="claro"><use href="#i-lua" /></svg>
+                        <svg viewBox="0 0 24 24" width="19" height="19" data-tema-icone="escuro" class="oculto"><use href="#i-sol" /></svg>
+                    </button>
+
+                    <div class="suspenso">
+                        <button type="button" class="btn btn--fantasma" data-suspenso="menu-usuario" style="gap:.6rem">
+                            <span class="avatar avatar--pequeno" style="background:@CorAvatar(nomeUsuario)">@iniciais</span>
+                            <span class="pilha" style="align-items:flex-start;line-height:1.2">
+                                <span class="pequeno negrito texto-forte">@nomeUsuario</span>
+                                <span class="minusculo texto-tenue">@perfil</span>
+                            </span>
+                        </button>
+
+                        <div class="suspenso__conteudo" id="menu-usuario" hidden>
+                            <div style="padding:.6rem .65rem">
+                                <div class="pequeno negrito texto-forte">@nomeUsuario</div>
+                                <div class="minusculo texto-suave">@(cargo ?? User.Identity?.Name)</div>
+                            </div>
+                            <div class="suspenso__separador"></div>
+                            <a class="suspenso__item" asp-controller="Conta" asp-action="Perfil">
+                                <svg viewBox="0 0 24 24"><use href="#i-usuario" /></svg> Meu perfil
+                            </a>
+                            <button type="button" class="suspenso__item" data-acao="alternar-tema">
+                                <svg viewBox="0 0 24 24"><use href="#i-lua" /></svg> Alternar tema
+                            </button>
+                            <div class="suspenso__separador"></div>
+                            <form asp-controller="Conta" asp-action="Sair" method="post">
+                                <button type="submit" class="suspenso__item suspenso__item--perigo" data-sem-bloqueio="true">
+                                    <svg viewBox="0 0 24 24"><use href="#i-sair" /></svg> Sair do sistema
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="pagina">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <partial name="_Toasts" />
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
+    <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+    <script src="~/js/elcop.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
