@@ -45,6 +45,10 @@
             <svg viewBox="0 0 24 24"><use href="#i-impressao" /></svg> Ficha
         </a>
 
+        <a class="btn btn--contorno" asp-controller="Demandas" asp-action="Criar" asp-route-ativoId="@ativo.Id">
+            <svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg> Abrir demanda
+        </a>
+
         @if (podeOperar)
         {
             @if (Model.PosseAtual is not null)
@@ -67,9 +71,6 @@
                 <div class="suspenso__conteudo" id="menu-ativo" hidden>
                     <a class="suspenso__item" asp-action="Editar" asp-route-id="@ativo.Id">
                         <svg viewBox="0 0 24 24"><use href="#i-editar" /></svg> Editar cadastro
-                    </a>
-                    <a class="suspenso__item" asp-controller="Demandas" asp-action="Criar" asp-route-ativoId="@ativo.Id">
-                        <svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg> Abrir demanda para este ativo
                     </a>
                     <div class="suspenso__separador"></div>
 

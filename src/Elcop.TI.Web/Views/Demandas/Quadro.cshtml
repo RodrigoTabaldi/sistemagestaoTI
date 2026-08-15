@@ -26,12 +26,9 @@
         <a class="btn btn--contorno" asp-action="Index">
             <svg viewBox="0 0 24 24"><use href="#i-relatorio" /></svg> Ver em lista
         </a>
-        @if (podeOperar)
-        {
-            <a class="btn btn--primario" asp-action="Criar">
-                <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg> Nova demanda
-            </a>
-        }
+        <a class="btn btn--primario" asp-action="Criar">
+            <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg> Nova demanda
+        </a>
     </div>
 </div>
 
@@ -67,10 +64,7 @@
             <svg viewBox="0 0 24 24"><use href="#i-quadro" /></svg>
             <h3>Quadro vazio</h3>
             <p>Nenhuma demanda ativa corresponde aos filtros. Registre uma nova demanda para começar.</p>
-            @if (podeOperar)
-            {
-                <a class="btn btn--primario btn--pequeno" asp-action="Criar">Nova demanda</a>
-            }
+            <a class="btn btn--primario btn--pequeno" asp-action="Criar">Nova demanda</a>
         </div>
     </section>
 }

@@ -58,7 +58,8 @@ public class DemandasController : Controller
         });
     }
 
-    [Authorize(Policy = Politicas.Operar)]
+    // Qualquer usuário autenticado pode abrir uma demanda — só o acompanhamento
+    // (editar, mover no quadro, excluir) fica restrito a quem opera o setor de TI.
     public async Task<IActionResult> Criar(int? ativoId, int? solicitanteId, CancellationToken ct) =>
         View("Formulario", new DemandaFormViewModel
         {
@@ -74,7 +75,6 @@ public class DemandasController : Controller
         });
 
     [HttpPost]
-    [Authorize(Policy = Politicas.Operar)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Criar(Demanda demanda, CancellationToken ct)
     {

@@ -41,19 +41,19 @@
     </div>
 
     <div class="cabecalho-pagina__acoes">
+        @if (podeOperar && colaborador.PodeReceberAtivos)
+        {
+            <a class="btn btn--primario" asp-controller="Movimentacoes" asp-action="Entregar"
+               asp-route-colaboradorId="@colaborador.Id">
+                <svg viewBox="0 0 24 24"><use href="#i-saida" /></svg> Entregar ativo
+            </a>
+        }
+        <a class="btn btn--contorno" asp-controller="Demandas" asp-action="Criar"
+           asp-route-solicitanteId="@colaborador.Id">
+            <svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg> Abrir demanda
+        </a>
         @if (podeOperar)
         {
-            @if (colaborador.PodeReceberAtivos)
-            {
-                <a class="btn btn--primario" asp-controller="Movimentacoes" asp-action="Entregar"
-                   asp-route-colaboradorId="@colaborador.Id">
-                    <svg viewBox="0 0 24 24"><use href="#i-saida" /></svg> Entregar ativo
-                </a>
-            }
-            <a class="btn btn--contorno" asp-controller="Demandas" asp-action="Criar"
-               asp-route-solicitanteId="@colaborador.Id">
-                <svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg> Abrir demanda
-            </a>
             <div class="suspenso">
                 <button type="button" class="btn btn--contorno" data-suspenso="menu-colaborador">Mais ações</button>
                 <div class="suspenso__conteudo" id="menu-colaborador" hidden>

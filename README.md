@@ -39,20 +39,24 @@ login (veja abaixo).
 
 ### Autocadastro
 
-A tela de login traz um link **Criar conta**. Por padrão a conta nasce **desabilitada**: quem se
-cadastra recebe o perfil `Consulta` e só entra depois que um administrador libera o acesso em
-**Usuários**. Enquanto isso, o login responde *"Este acesso ainda não foi liberado"*.
+A tela de login traz um link **Criar conta**. Com `AprovacaoAutomatica: true` (padrão atual do
+projeto), quem se cadastra recebe o perfil `Consulta` e **entra imediatamente**, sem depender de
+um administrador. Ajuste o campo abaixo caso prefira liberar manualmente em **Usuários**.
 
 ```jsonc
 "Elcop": {
   "AutoCadastro": {
     "Habilitado": true,
     "PerfilPadrao": "Consulta",
-    "AprovacaoAutomatica": false,      // true = entra na hora, sem aprovação
+    "AprovacaoAutomatica": true,       // false = conta nasce desabilitada até um admin liberar
     "DominiosPermitidos": []           // ex.: [ "elcop.com.br" ] restringe o e-mail
   }
 }
 ```
+
+> Uma conta criada **antes** de mudar `AprovacaoAutomatica` fica com o valor que estava em vigor
+> na hora do cadastro — mudar a configuração não libera retroativamente quem já estava pendente.
+> Libere manualmente em **Usuários** ou cadastre a conta de novo.
 
 - `Habilitado: false` remove o link e bloqueia as rotas de cadastro (404).
 - `AprovacaoAutomatica: true` dá acesso imediato a qualquer pessoa que abra a tela de login —
@@ -89,6 +93,31 @@ serviços permanecem testáveis.
   desligar colaborador com equipamento). Um *exception filter* converte em toast, sem página de erro.
 - **Trilha de auditoria** gravada na mesma transação da operação auditada.
 - **Carimbo de criação/alteração** aplicado no `SaveChanges` como rede de segurança.
+
+---
+
+## Infraestrutura e escalabilidade
+
+Preparado para rodar em PaaS (**Render** ou **Firebase/Cloud Run**), que já fornecem load
+balancer, TLS e escalonamento horizontal como recurso de plataforma — nenhum desses três é
+implementado em código. O que o código faz é a contraparte necessária para funcionar
+corretamente atrás desse tipo de proxy, além de cache e fila para reduzir latência percebida.
+
+| Peça | Implementação | Onde |
+|---|---|---|
+| **Cache de leitura** | `IMemoryCache` via `ICacheService`, TTL 5 min (listas de seleção) / 60 s (painel e resumos) | `Infrastructure/Caching/MemoryCacheService.cs` |
+| **Rate limiting** | `Microsoft.AspNetCore.RateLimiting` nativo do .NET 8: 300 req/min por IP global, 10 tentativas/5 min no login, 20 req/min em upload | `Program.cs` |
+| **Fila de background** | `System.Threading.Channels` + `BackgroundService`, usada para remover foto antiga sem bloquear a resposta HTTP | `Infrastructure/BackgroundJobs/` |
+| **Forwarded headers** | Confia em `X-Forwarded-For`/`X-Forwarded-Proto` do proxy da plataforma — necessário para o rate limiting por IP e a detecção de HTTPS funcionarem atrás do load balancer | `Program.cs` |
+| **Health check** | `GET /health` verifica `Database.CanConnectAsync()` — é o endpoint que a plataforma usa para saber se a instância está saudável | `Infrastructure/Health/DbHealthCheck.cs` |
+
+**Por que não Redis/Docker:** com uma única instância (o caso de uso atual em Render/Firebase),
+cache e fila em memória do processo já resolvem o problema, sem infraestrutura externa para
+manter. Cache e fila tolerando alguma inconsistência entre instâncias (dashboard, listas de
+apoio, limpeza de foto antiga) — nada crítico depende deles. Se um dia o sistema escalar para
+múltiplas instâncias, o caminho é trocar `MemoryCacheService`/`BackgroundTaskQueue` por uma
+implementação sobre Redis, sem tocar em nenhum consumidor: ambos são acessados só pela
+interface (`ICacheService`/`IBackgroundTaskQueue`), definida na camada Application.
 
 ---
 
@@ -278,7 +307,11 @@ detectada sozinha. Fora do Google Cloud, aponte o JSON da conta de serviço:
 |-----------------|-----------|
 | `Administrador` | Tudo, incluindo usuários, cadastros de apoio e auditoria |
 | `Tecnico`       | Cadastra ativos/colaboradores, movimenta e trata demandas |
-| `Consulta`      | Somente leitura de inventário, movimentações e demandas |
+| `Consulta`      | Leitura de inventário, movimentações e demandas, **e abrir novas demandas** |
+
+Qualquer usuário autenticado pode **registrar uma nova demanda** — é o fluxo normal de um
+colaborador abrir um chamado para o setor de TI. Editar, mover no quadro kanban e excluir uma
+demanda continuam restritos a `Tecnico`/`Administrador`.
 
 Toda a aplicação exige autenticação por padrão (`FallbackPolicy`); o acesso anônimo é declarado
 explicitamente apenas nas telas de login e erro.
