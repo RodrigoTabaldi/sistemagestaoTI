@@ -1,4 +1,7 @@
 using Elcop.TI.Application.Common;
+using Elcop.TI.Infrastructure.BackgroundJobs;
+using Elcop.TI.Infrastructure.Caching;
+using Elcop.TI.Infrastructure.Health;
 using Elcop.TI.Infrastructure.Identity;
 using Elcop.TI.Infrastructure.Persistence;
 using Elcop.TI.Infrastructure.Storage;
@@ -88,6 +91,14 @@ public static class DependencyInjection
 
         services.Configure<ElcopAutoCadastroOptions>(
             configuration.GetSection(ElcopAutoCadastroOptions.Secao));
+
+        services.AddMemoryCache();
+        services.AddSingleton<ICacheService, MemoryCacheService>();
+
+        services.AddSingleton<IBackgroundTaskQueue, BackgroundTaskQueue>();
+        services.AddHostedService<QueuedHostedService>();
+
+        services.AddHealthChecks().AddCheck<DbHealthCheck>("database");
 
         AdicionarFirebase(services, configuration);
         AdicionarArmazenamento(services, configuration);

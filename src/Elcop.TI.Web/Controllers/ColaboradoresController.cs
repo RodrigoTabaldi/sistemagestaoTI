@@ -7,6 +7,7 @@ using Elcop.TI.Web.Models;
 using Elcop.TI.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elcop.TI.Web.Controllers;
 
@@ -18,13 +19,16 @@ public class ColaboradoresController : Controller
     private readonly IColaboradorService _colaboradores;
     private readonly ISelecaoService _selecao;
     private readonly IArmazenamentoArquivos _arquivos;
+    private readonly IBackgroundTaskQueue _filaBackground;
 
     public ColaboradoresController(
-        IColaboradorService colaboradores, ISelecaoService selecao, IArmazenamentoArquivos arquivos)
+        IColaboradorService colaboradores, ISelecaoService selecao, IArmazenamentoArquivos arquivos,
+        IBackgroundTaskQueue filaBackground)
     {
         _colaboradores = colaboradores;
         _selecao = selecao;
         _arquivos = arquivos;
+        _filaBackground = filaBackground;
     }
 
     public async Task<IActionResult> Index(ColaboradorFiltro filtro, CancellationToken ct)
@@ -68,6 +72,7 @@ public class ColaboradoresController : Controller
 
     [HttpPost]
     [Authorize(Policy = Politicas.Operar)]
+    [EnableRateLimiting("upload")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Criar(Colaborador colaborador, IFormFile? foto, CancellationToken ct)
     {
@@ -80,8 +85,20 @@ public class ColaboradoresController : Controller
                 Listas = await _selecao.MontarAsync(ct: ct)
             });
 
-        colaborador.FotoUrl =
-            await UploadDeImagem.EnviarFotoAsync(_arquivos, foto, PastaFotos, ct) ?? colaborador.FotoUrl;
+        try
+        {
+            colaborador.FotoUrl =
+                await UploadDeImagem.EnviarFotoAsync(_arquivos, foto, PastaFotos, ct) ?? colaborador.FotoUrl;
+        }
+        catch
+        {
+            ModelState.AddModelError(UploadDeImagem.Campo, "Não foi possível enviar a foto. Tente novamente.");
+            return View("Formulario", new ColaboradorFormViewModel
+            {
+                Colaborador = colaborador,
+                Listas = await _selecao.MontarAsync(ct: ct)
+            });
+        }
 
         var id = await _colaboradores.CriarAsync(colaborador, ct);
         this.NotificarSucesso($"Colaborador {colaborador.NomeCompleto} cadastrado.");
@@ -104,6 +121,7 @@ public class ColaboradoresController : Controller
 
     [HttpPost]
     [Authorize(Policy = Politicas.Operar)]
+    [EnableRateLimiting("upload")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Editar(
         int id, Colaborador colaborador, IFormFile? foto, CancellationToken ct)
@@ -120,13 +138,31 @@ public class ColaboradoresController : Controller
             });
 
         var fotoAnterior = colaborador.FotoUrl;
-        var novaFoto = await UploadDeImagem.EnviarFotoAsync(_arquivos, foto, PastaFotos, ct);
-        if (novaFoto is not null) colaborador.FotoUrl = novaFoto;
+        string? novaFoto = null;
+
+        try
+        {
+            novaFoto = await UploadDeImagem.EnviarFotoAsync(_arquivos, foto, PastaFotos, ct);
+            if (novaFoto is not null) colaborador.FotoUrl = novaFoto;
+        }
+        catch
+        {
+            ModelState.AddModelError(UploadDeImagem.Campo, "Não foi possível enviar a foto. Tente novamente.");
+            return View("Formulario", new ColaboradorFormViewModel
+            {
+                Colaborador = colaborador,
+                Listas = await _selecao.MontarAsync(ct: ct)
+            });
+        }
 
         await _colaboradores.AtualizarAsync(colaborador, ct);
 
-        // Só depois de gravar: se a atualização falhar, a imagem antiga continua válida.
-        await UploadDeImagem.RemoverAnteriorAsync(_arquivos, fotoAnterior, novaFoto, ct);
+        // Remover foto anterior em background: não bloqueia a resposta
+        if (!string.IsNullOrWhiteSpace(fotoAnterior) && !string.IsNullOrWhiteSpace(novaFoto) && fotoAnterior != novaFoto)
+        {
+            await _filaBackground.EnfileirarAsync(async ct2 =>
+                await UploadDeImagem.RemoverAnteriorAsync(_arquivos, fotoAnterior, novaFoto, ct2), ct);
+        }
 
         this.NotificarSucesso("Cadastro atualizado.");
 

@@ -15,12 +15,14 @@ public class AtivoService : IAtivoService
     private readonly IAppDbContext _db;
     private readonly IUsuarioAtual _usuario;
     private readonly IAuditoriaService _auditoria;
+    private readonly ICacheService _cache;
 
-    public AtivoService(IAppDbContext db, IUsuarioAtual usuario, IAuditoriaService auditoria)
+    public AtivoService(IAppDbContext db, IUsuarioAtual usuario, IAuditoriaService auditoria, ICacheService cache)
     {
         _db = db;
         _usuario = usuario;
         _auditoria = auditoria;
+        _cache = cache;
     }
 
     public async Task<ResultadoPaginado<Ativo>> ListarAsync(AtivoFiltro filtro, CancellationToken ct = default)
@@ -96,6 +98,8 @@ public class AtivoService : IAtivoService
         await GarantirIdentificadoresUnicosAsync(ativo, ct);
 
         ativo.Patrimonio = ativo.Patrimonio.Trim().ToUpperInvariant();
+        if (!string.IsNullOrWhiteSpace(ativo.NumeroSerie))
+            ativo.NumeroSerie = ativo.NumeroSerie.Trim().ToUpperInvariant();
         ativo.MarcarCriacao(_usuario.NomeExibicao);
         NormalizarPosse(ativo);
 
@@ -130,6 +134,8 @@ public class AtivoService : IAtivoService
         existente.CriadoPor = criadoPor;
         existente.Excluido = excluido;
         existente.Patrimonio = ativo.Patrimonio.Trim().ToUpperInvariant();
+        if (!string.IsNullOrWhiteSpace(ativo.NumeroSerie))
+            existente.NumeroSerie = ativo.NumeroSerie.Trim().ToUpperInvariant();
         existente.MarcarAtualizacao(_usuario.NomeExibicao);
 
         await _auditoria.RegistrarAsync(
@@ -223,7 +229,7 @@ public class AtivoService : IAtivoService
         return _db.Ativos
             .IgnoreQueryFilters()
             .AnyAsync(a => a.NumeroSerie != null
-                        && a.NumeroSerie.ToUpper() == valor
+                        && a.NumeroSerie == valor
                         && (ignorarId == null || a.Id != ignorarId), ct);
     }
 
@@ -236,29 +242,33 @@ public class AtivoService : IAtivoService
             .OrderBy(a => a.Tipo).ThenBy(a => a.Patrimonio)
             .ToListAsync(ct);
 
-    public async Task<IReadOnlyList<ResumoPorTipo>> ResumirPorTipoAsync(CancellationToken ct = default)
-    {
-        var dados = await _db.Ativos
-            .AsNoTracking()
-            .GroupBy(a => a.Tipo)
-            .Select(g => new
+    public async Task<IReadOnlyList<ResumoPorTipo>> ResumirPorTipoAsync(CancellationToken ct = default) =>
+        await _cache.ObterOuCriarAsync(
+            "resumo_tipos_ativos",
+            TimeSpan.FromSeconds(60),
+            async () =>
             {
-                Tipo = g.Key,
-                Total = g.Count(),
-                Disponiveis = g.Count(a => a.Status == StatusAtivo.Disponivel),
-                EmUso = g.Count(a => a.Status == StatusAtivo.EmUso),
-                EmManutencao = g.Count(a => a.Status == StatusAtivo.EmManutencao),
-                // SQLite não agrega decimal: soma em double e converte de volta na aplicação.
-                Valor = g.Sum(a => (double)(a.ValorAquisicao ?? 0m))
-            })
-            .ToListAsync(ct);
+                var dados = await _db.Ativos
+                    .AsNoTracking()
+                    .GroupBy(a => a.Tipo)
+                    .Select(g => new
+                    {
+                        Tipo = g.Key,
+                        Total = g.Count(),
+                        Disponiveis = g.Count(a => a.Status == StatusAtivo.Disponivel),
+                        EmUso = g.Count(a => a.Status == StatusAtivo.EmUso),
+                        EmManutencao = g.Count(a => a.Status == StatusAtivo.EmManutencao),
+                        Valor = g.Sum(a => (double)(a.ValorAquisicao ?? 0m))
+                    })
+                    .ToListAsync(ct);
 
-        return dados
-            .Select(d => new ResumoPorTipo(
-                d.Tipo, d.Tipo.ObterNome(), d.Total, d.Disponiveis, d.EmUso, d.EmManutencao, (decimal)d.Valor))
-            .OrderByDescending(r => r.Total)
-            .ToList();
-    }
+                return (IReadOnlyList<ResumoPorTipo>)dados
+                    .Select(d => new ResumoPorTipo(
+                        d.Tipo, d.Tipo.ObterNome(), d.Total, d.Disponiveis, d.EmUso, d.EmManutencao, (decimal)d.Valor))
+                    .OrderByDescending(r => r.Total)
+                    .ToList();
+            },
+            ct);
 
     private async Task GarantirIdentificadoresUnicosAsync(Ativo ativo, CancellationToken ct)
     {

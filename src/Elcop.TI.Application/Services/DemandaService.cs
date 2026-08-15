@@ -267,7 +267,7 @@ public class DemandaService : IDemandaService
     public async Task<IReadOnlyList<string>> ListarResponsaveisAsync(CancellationToken ct = default) =>
         await _db.Demandas
             .AsNoTracking()
-            .Where(d => d.Responsavel != null && d.Responsavel != "")
+            .Where(d => !string.IsNullOrWhiteSpace(d.Responsavel))
             .Select(d => d.Responsavel!)
             .Distinct()
             .OrderBy(r => r)

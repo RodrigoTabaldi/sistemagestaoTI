@@ -7,6 +7,7 @@ using Elcop.TI.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 
 namespace Elcop.TI.Web.Controllers;
@@ -75,6 +76,7 @@ public class ContaController : Controller
 
     [HttpPost("Registrar")]
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Registrar(RegistroViewModel model)
     {
@@ -156,6 +158,7 @@ public class ContaController : Controller
 
     [HttpPost("Entrar")]
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Entrar(LoginViewModel model)
     {
@@ -216,6 +219,7 @@ public class ContaController : Controller
     /// </summary>
     [HttpPost("EntrarFirebase")]
     [AllowAnonymous]
+    [EnableRateLimiting("login")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EntrarFirebase(string idToken, string? urlRetorno = null)
     {

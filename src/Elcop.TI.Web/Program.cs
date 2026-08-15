@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Threading.RateLimiting;
 using Elcop.TI.Application;
 using Elcop.TI.Application.Common;
 using Elcop.TI.Infrastructure;
@@ -6,8 +7,10 @@ using Elcop.TI.Infrastructure.Identity;
 using Elcop.TI.Infrastructure.Persistence;
 using Elcop.TI.Web.Infra;
 using Elcop.TI.Web.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Razor;
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +42,50 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SameSite = SameSiteMode.Lax;
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+    // Política global: 300 requisições por minuto por IP
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 300,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+
+    // Política "login": 10 tentativas por 5 minutos por IP (spray protection)
+    options.AddPolicy("login", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(5)
+            }));
+
+    // Política "upload": 20 requisições por minuto por IP (proteção de upload abuse)
+    options.AddPolicy("upload", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+
+    // Recusando requisições em vez de enfileirá-las: mais simples e apropriado para web apps
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = (context, _) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        return ValueTask.CompletedTask;
+    };
+});
+
 builder.Services.AddAuthorization(options =>
 {
     // Sem autenticação não se navega em lugar nenhum: o opt-out é explícito ([AllowAnonymous]).
@@ -68,6 +115,15 @@ var app = builder.Build();
 
 // ----------------------------------------------------------------- Pipeline
 
+// Forwarded headers: necessário para funcionar corretamente atrás de load balancer
+// (Render, Cloud Run, etc.). Deve vir ANTES de qualquer middleware que use RemoteIpAddress.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+    KnownNetworks = { }, // PaaS: proxy não tem IP fixo conhecido
+    KnownProxies = { }
+});
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Erro");
@@ -84,12 +140,15 @@ app.UseStaticFiles();
 app.UseRequestLocalization();
 
 app.UseRouting();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Painel}/{action=Index}/{id?}");
+
+app.MapHealthChecks("/health");
 
 // ----------------------------------------------------------------- Inicialização
 await DbInitializer.InicializarAsync(app.Services);

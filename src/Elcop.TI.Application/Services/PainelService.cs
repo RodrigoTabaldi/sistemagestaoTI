@@ -46,10 +46,22 @@ public class PainelService : IPainelService
         };
 
     private readonly IAppDbContext _db;
+    private readonly ICacheService _cache;
 
-    public PainelService(IAppDbContext db) => _db = db;
+    public PainelService(IAppDbContext db, ICacheService cache)
+    {
+        _db = db;
+        _cache = cache;
+    }
 
-    public async Task<PainelModel> ObterAsync(CancellationToken ct = default)
+    public async Task<PainelModel> ObterAsync(CancellationToken ct = default) =>
+        await _cache.ObterOuCriarAsync(
+            "painel",
+            TimeSpan.FromSeconds(60),
+            () => CalcularPainelAsync(ct),
+            ct);
+
+    private async Task<PainelModel> CalcularPainelAsync(CancellationToken ct)
     {
         var hoje = DateTime.Today;
         var inicioMes = new DateTime(hoje.Year, hoje.Month, 1);

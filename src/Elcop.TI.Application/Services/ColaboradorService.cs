@@ -195,7 +195,7 @@ public class ColaboradorService : IColaboradorService
         var valor = email.Trim().ToLowerInvariant();
         return _db.Colaboradores
             .IgnoreQueryFilters()
-            .AnyAsync(c => c.Email.ToLower() == valor && (ignorarId == null || c.Id != ignorarId), ct);
+            .AnyAsync(c => c.Email == valor && (ignorarId == null || c.Id != ignorarId), ct);
     }
 
     private async Task GarantirDadosUnicosAsync(Colaborador colaborador, CancellationToken ct)

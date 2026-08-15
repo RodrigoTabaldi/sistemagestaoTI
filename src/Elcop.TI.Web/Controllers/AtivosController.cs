@@ -9,6 +9,7 @@ using Elcop.TI.Web.Models;
 using Elcop.TI.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Elcop.TI.Web.Controllers;
 
@@ -20,13 +21,16 @@ public class AtivosController : Controller
     private readonly IAtivoService _ativos;
     private readonly ISelecaoService _selecao;
     private readonly IArmazenamentoArquivos _arquivos;
+    private readonly IBackgroundTaskQueue _filaBackground;
 
     public AtivosController(
-        IAtivoService ativos, ISelecaoService selecao, IArmazenamentoArquivos arquivos)
+        IAtivoService ativos, ISelecaoService selecao, IArmazenamentoArquivos arquivos,
+        IBackgroundTaskQueue filaBackground)
     {
         _ativos = ativos;
         _selecao = selecao;
         _arquivos = arquivos;
+        _filaBackground = filaBackground;
     }
 
     public async Task<IActionResult> Index(AtivoFiltro filtro, CancellationToken ct)
@@ -78,6 +82,7 @@ public class AtivosController : Controller
 
     [HttpPost]
     [Authorize(Policy = Politicas.Operar)]
+    [EnableRateLimiting("upload")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Criar(Ativo ativo, IFormFile? foto, CancellationToken ct)
     {
@@ -90,7 +95,19 @@ public class AtivosController : Controller
                 Listas = await _selecao.MontarAsync(ct: ct)
             });
 
-        ativo.FotoUrl = await UploadDeImagem.EnviarFotoAsync(_arquivos, foto, PastaFotos, ct) ?? ativo.FotoUrl;
+        try
+        {
+            ativo.FotoUrl = await UploadDeImagem.EnviarFotoAsync(_arquivos, foto, PastaFotos, ct) ?? ativo.FotoUrl;
+        }
+        catch
+        {
+            ModelState.AddModelError(UploadDeImagem.Campo, "Não foi possível enviar a foto. Tente novamente.");
+            return View("Formulario", new AtivoFormViewModel
+            {
+                Ativo = ativo,
+                Listas = await _selecao.MontarAsync(ct: ct)
+            });
+        }
 
         var id = await _ativos.CriarAsync(ativo, ct);
         this.NotificarSucesso($"Ativo {ativo.Patrimonio} cadastrado com sucesso.");
@@ -113,6 +130,7 @@ public class AtivosController : Controller
 
     [HttpPost]
     [Authorize(Policy = Politicas.Operar)]
+    [EnableRateLimiting("upload")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Editar(int id, Ativo ativo, IFormFile? foto, CancellationToken ct)
     {
@@ -128,13 +146,31 @@ public class AtivosController : Controller
             });
 
         var fotoAnterior = ativo.FotoUrl;
-        var novaFoto = await UploadDeImagem.EnviarFotoAsync(_arquivos, foto, PastaFotos, ct);
-        if (novaFoto is not null) ativo.FotoUrl = novaFoto;
+        string? novaFoto = null;
+
+        try
+        {
+            novaFoto = await UploadDeImagem.EnviarFotoAsync(_arquivos, foto, PastaFotos, ct);
+            if (novaFoto is not null) ativo.FotoUrl = novaFoto;
+        }
+        catch
+        {
+            ModelState.AddModelError(UploadDeImagem.Campo, "Não foi possível enviar a foto. Tente novamente.");
+            return View("Formulario", new AtivoFormViewModel
+            {
+                Ativo = ativo,
+                Listas = await _selecao.MontarAsync(ct: ct)
+            });
+        }
 
         await _ativos.AtualizarAsync(ativo, ct);
 
-        // Só depois de gravar: se a atualização falhar, a imagem antiga continua válida.
-        await UploadDeImagem.RemoverAnteriorAsync(_arquivos, fotoAnterior, novaFoto, ct);
+        // Remover foto anterior em background: não bloqueia a resposta
+        if (!string.IsNullOrWhiteSpace(fotoAnterior) && !string.IsNullOrWhiteSpace(novaFoto) && fotoAnterior != novaFoto)
+        {
+            await _filaBackground.EnfileirarAsync(async ct2 =>
+                await UploadDeImagem.RemoverAnteriorAsync(_arquivos, fotoAnterior, novaFoto, ct2), ct);
+        }
 
         this.NotificarSucesso($"Ativo {ativo.Patrimonio} atualizado.");
 
