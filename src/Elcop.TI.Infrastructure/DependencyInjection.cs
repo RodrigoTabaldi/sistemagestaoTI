@@ -78,7 +78,7 @@ public static class DependencyInjection
 
             options.User.RequireUniqueEmail = true;
 
-            // Bloqueio temporário após tentativas seguidas de senha incorreta.
+            // Bloquei,o temporário apósooo tentativdas seguidas de senha incorreta.
             options.Lockout.MaxFailedAccessAttempts = 5;
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(10);
         })
