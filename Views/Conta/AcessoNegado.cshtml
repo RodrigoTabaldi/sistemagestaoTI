@@ -1,0 +1,27 @@
+@{
+    Layout = "_LayoutAutenticacao";
+    ViewData["Titulo"] = "Acesso negado";
+}
+
+<div class="tela-login__form" style="min-height:100vh">
+    <div class="tela-login__caixa" style="text-align:center">
+        <img class="tela-login__logo" src="~/img/logo-elcop.png" alt="ELCOP" style="margin-inline:auto" />
+
+        <div class="kpi__icone" style="--kpi-cor:var(--cor-perigo);width:64px;height:64px;margin:0 auto 1.2rem">
+            <svg viewBox="0 0 24 24" width="32" height="32"><use href="#i-escudo" /></svg>
+        </div>
+
+        <h1 class="mb-2">Acesso negado</h1>
+        <p class="texto-suave mb-4">
+            Seu perfil não tem permissão para acessar esta área do sistema.
+            Se você acredita que isso é um engano, procure o administrador.
+        </p>
+
+        <div class="linha centro g-2">
+            <a class="btn btn--primario" asp-controller="Painel" asp-action="Index">Voltar ao painel</a>
+            <form asp-action="Sair" method="post">
+                <button type="submit" class="btn btn--contorno" data-sem-bloqueio="true">Trocar de usuário</button>
+            </form>
+        </div>
+    </div>
+</div>

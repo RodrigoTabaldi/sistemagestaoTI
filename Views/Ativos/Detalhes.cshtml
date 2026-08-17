@@ -1,0 +1,309 @@
+@model DetalhesAtivoViewModel
+@{
+    var ativo = Model.Ativo;
+    ViewData["Titulo"] = ativo.Patrimonio;
+    ViewData["Subtitulo"] = ativo.DescricaoCurta;
+    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+}
+
+<div class="migalhas">
+    <a asp-action="Index">Ativos</a> <span>/</span> <span>@ativo.Patrimonio</span>
+</div>
+
+<div class="cabecalho-pagina">
+    <div class="linha g-3">
+        @if (!string.IsNullOrWhiteSpace(ativo.FotoUrl))
+        {
+            <img class="miniatura" src="@ativo.FotoUrl" alt="Foto de @ativo.DescricaoCurta" />
+        }
+        else
+        {
+            <span class="icone-tipo" style="width:56px;height:56px;border-radius:var(--raio)">
+                <svg viewBox="0 0 24 24" width="28" height="28"><use href="#@("i-" + IconeTipoAtivo(ativo.Tipo))" /></svg>
+            </span>
+        }
+        <div>
+            <h1>@ativo.DescricaoCurta</h1>
+            <p class="linha g-2 envolve">
+                <span class="mono">@ativo.Patrimonio</span>
+                <span class="selo selo--@ClasseStatusAtivo(ativo.Status)">@ativo.Status.ObterNome()</span>
+                <span class="selo selo--@ClasseCondicao(ativo.Condicao) selo--sem-ponto">@ativo.Condicao.ObterNome()</span>
+                @if (ativo.EmGarantia)
+                {
+                    <span class="selo selo--sucesso selo--sem-ponto">em garantia</span>
+                }
+                @if (ativo.GarantiaProximaDoVencimento)
+                {
+                    <span class="selo selo--aviso">garantia vence em breve</span>
+                }
+            </p>
+        </div>
+    </div>
+
+    <div class="cabecalho-pagina__acoes">
+        <a class="btn btn--contorno" asp-action="Ficha" asp-route-id="@ativo.Id">
+            <svg viewBox="0 0 24 24"><use href="#i-impressao" /></svg> Ficha
+        </a>
+
+        @if (podeOperar)
+        {
+            @if (Model.PosseAtual is not null)
+            {
+                <a class="btn btn--sucesso" asp-controller="Movimentacoes" asp-action="Devolver"
+                   asp-route-id="@Model.PosseAtual.Id">
+                    <svg viewBox="0 0 24 24"><use href="#i-entrada" /></svg> Registrar devolução
+                </a>
+            }
+            else if (ativo.DisponivelParaEntrega)
+            {
+                <a class="btn btn--primario" asp-controller="Movimentacoes" asp-action="Entregar"
+                   asp-route-ativoId="@ativo.Id">
+                    <svg viewBox="0 0 24 24"><use href="#i-saida" /></svg> Entregar ativo
+                </a>
+            }
+
+            <div class="suspenso">
+                <button type="button" class="btn btn--contorno" data-suspenso="menu-ativo">Mais ações</button>
+                <div class="suspenso__conteudo" id="menu-ativo" hidden>
+                    <a class="suspenso__item" asp-action="Editar" asp-route-id="@ativo.Id">
+                        <svg viewBox="0 0 24 24"><use href="#i-editar" /></svg> Editar cadastro
+                    </a>
+                    <a class="suspenso__item" asp-controller="Demandas" asp-action="Criar" asp-route-ativoId="@ativo.Id">
+                        <svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg> Abrir demanda para este ativo
+                    </a>
+                    <div class="suspenso__separador"></div>
+
+                    <form asp-action="AlterarStatus" asp-route-id="@ativo.Id" method="post">
+                        <input type="hidden" name="status" value="@StatusAtivo.EmManutencao" />
+                        <input type="hidden" name="motivo" value="Enviado para manutenção pelo painel do ativo." />
+                        <button type="submit" class="suspenso__item">
+                            <svg viewBox="0 0 24 24"><use href="#i-ferramenta" /></svg> Enviar para manutenção
+                        </button>
+                    </form>
+
+                    <form asp-action="AlterarStatus" asp-route-id="@ativo.Id" method="post">
+                        <input type="hidden" name="status" value="@StatusAtivo.Disponivel" />
+                        <input type="hidden" name="motivo" value="Liberado para o estoque." />
+                        <button type="submit" class="suspenso__item">
+                            <svg viewBox="0 0 24 24"><use href="#i-check-circulo" /></svg> Marcar como disponível
+                        </button>
+                    </form>
+
+                    <div class="suspenso__separador"></div>
+                    <form asp-action="Excluir" asp-route-id="@ativo.Id" method="post"
+                          data-confirmar="O ativo @ativo.Patrimonio será removido do inventário. Esta ação pode ser revertida apenas pelo banco de dados."
+                          data-confirmar-titulo="Excluir ativo" data-confirmar-ok="Excluir" data-confirmar-perigo="true">
+                        <button type="submit" class="suspenso__item suspenso__item--perigo">
+                            <svg viewBox="0 0 24 24"><use href="#i-lixeira" /></svg> Excluir do inventário
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (Model.PosseAtual is { } posse)
+{
+    <div class="alerta alerta--info mb-4">
+        <svg viewBox="0 0 24 24"><use href="#i-usuario" /></svg>
+        <div class="crescer">
+            <strong>Em posse de @posse.Colaborador?.NomeCompleto</strong>
+            <div class="pequeno texto-suave">
+                Termo @posse.Protocolo · retirado em @posse.DataRetirada.ToString("dd/MM/yyyy 'às' HH:mm")
+                (@posse.DiasEmPosse dia(s))
+                @if (posse.DataPrevistaDevolucao.HasValue)
+                {
+                    <text> · previsão de devolução em @posse.DataPrevistaDevolucao.Value.ToString("dd/MM/yyyy")</text>
+                }
+            </div>
+        </div>
+        @if (posse.EstaAtrasada)
+        {
+            <span class="selo selo--perigo">@posse.DiasDeAtraso dia(s) de atraso</span>
+        }
+        <a class="btn btn--contorno btn--pequeno" asp-controller="Movimentacoes" asp-action="Detalhes"
+           asp-route-id="@posse.Id">Ver termo</a>
+    </div>
+}
+
+<div class="grade-painel">
+    <div class="pilha g-4">
+        <section class="cartao">
+            <div class="cartao__cabecalho"><h2>Dados do equipamento</h2></div>
+            <div class="cartao__corpo">
+                <dl class="lista-dados">
+                    <dt>Tipo</dt><dd>@ativo.Tipo.ObterNome()</dd>
+                    <dt>Marca / Modelo</dt><dd>@ativo.Marca · @ativo.Modelo</dd>
+                    <dt>Número de série</dt><dd class="mono">@(ativo.NumeroSerie ?? "—")</dd>
+                    @if (ativo.ExigeIdentificacaoMovel)
+                    {
+                        <dt>IMEI</dt><dd class="mono">@(ativo.Imei ?? "—")</dd>
+                        @if (!string.IsNullOrWhiteSpace(ativo.Imei2))
+                        {
+                            <dt>IMEI 2</dt><dd class="mono">@ativo.Imei2</dd>
+                        }
+                        <dt>Linha / Operadora</dt><dd>@(ativo.NumeroLinha ?? "—") @(ativo.Operadora is null ? "" : $"· {ativo.Operadora}")</dd>
+                    }
+                    @if (ativo.ExigeEspecificacaoTecnica)
+                    {
+                        <dt>Processador</dt><dd>@(ativo.Processador ?? "—")</dd>
+                        <dt>Memória</dt><dd>@(ativo.MemoriaRam ?? "—")</dd>
+                        <dt>Armazenamento</dt><dd>@(ativo.Armazenamento ?? "—")</dd>
+                        <dt>Sistema operacional</dt><dd>@(ativo.SistemaOperacional ?? "—")</dd>
+                        <dt>Hostname</dt><dd class="mono">@(ativo.Hostname ?? "—")</dd>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(ativo.Tamanho))
+                    {
+                        <dt>Tamanho</dt><dd>@ativo.Tamanho</dd>
+                    }
+                    <dt>Acessórios</dt><dd>@(string.IsNullOrWhiteSpace(ativo.Acessorios) ? "—" : ativo.Acessorios)</dd>
+                    @if (!string.IsNullOrWhiteSpace(ativo.Observacoes))
+                    {
+                        <dt>Observações</dt><dd style="white-space:pre-line">@ativo.Observacoes</dd>
+                    }
+                </dl>
+            </div>
+        </section>
+
+        <section class="cartao">
+            <div class="cartao__cabecalho">
+                <h2>Histórico de posse</h2>
+                <div class="acoes"><span class="chip">@Model.Historico.Count registro(s)</span></div>
+            </div>
+
+            @if (Model.Historico.Count == 0)
+            {
+                <div class="vazio">
+                    <svg viewBox="0 0 24 24"><use href="#i-troca" /></svg>
+                    <h3>Sem movimentações</h3>
+                    <p>Este ativo nunca foi entregue a um colaborador.</p>
+                </div>
+            }
+            else
+            {
+                <div class="tabela-wrapper">
+                    <table class="tabela">
+                        <thead>
+                            <tr>
+                                <th>Protocolo</th><th>Colaborador</th><th>Retirada</th>
+                                <th>Devolução</th><th>Situação</th><th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var movimentacao in Model.Historico)
+                            {
+                                <tr>
+                                    <td class="mono pequeno">@movimentacao.Protocolo</td>
+                                    <td class="pequeno">@movimentacao.Colaborador?.NomeCompleto</td>
+                                    <td class="pequeno">@movimentacao.DataRetirada.ToString("dd/MM/yyyy")</td>
+                                    <td class="pequeno">@(movimentacao.DataDevolucao?.ToString("dd/MM/yyyy") ?? "—")</td>
+                                    <td>
+                                        <span class="selo selo--@ClasseStatusMovimentacao(movimentacao.Status)">
+                                            @movimentacao.Status.ObterNome()
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="acoes-linha">
+                                            <a class="btn btn--fantasma btn--icone btn--pequeno" title="Ver termo"
+                                               asp-controller="Movimentacoes" asp-action="Detalhes" asp-route-id="@movimentacao.Id">
+                                                <svg viewBox="0 0 24 24"><use href="#i-olho" /></svg>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        @if (Model.Demandas.Count > 0)
+        {
+            <section class="cartao">
+                <div class="cartao__cabecalho"><h2>Demandas relacionadas</h2></div>
+                <div class="tabela-wrapper">
+                    <table class="tabela">
+                        <tbody>
+                            @foreach (var demanda in Model.Demandas)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-controller="Demandas" asp-action="Detalhes" asp-route-id="@demanda.Id">
+                                            <strong class="pequeno">@demanda.Titulo</strong>
+                                        </a>
+                                        <div class="minusculo texto-tenue mono">@demanda.Codigo</div>
+                                    </td>
+                                    <td><span class="selo selo--@ClassePrioridade(demanda.Prioridade)">@demanda.Prioridade.ObterNome()</span></td>
+                                    <td><span class="selo selo--@ClasseStatusDemanda(demanda.Status)">@demanda.Status.ObterNome()</span></td>
+                                    <td class="num pequeno texto-suave">@demanda.DataAbertura.ToString("dd/MM/yyyy")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
+    </div>
+
+    <div class="pilha g-4">
+        <section class="cartao">
+            <div class="cartao__cabecalho"><h2>Aquisição</h2></div>
+            <div class="cartao__corpo">
+                <dl class="lista-dados">
+                    <dt>Fornecedor</dt><dd>@(ativo.Fornecedor?.Nome ?? "—")</dd>
+                    <dt>Data de aquisição</dt><dd>@(ativo.DataAquisicao?.ToString("dd/MM/yyyy") ?? "—")</dd>
+                    <dt>Valor</dt><dd>@(ativo.ValorAquisicao?.ToString("C") ?? "—")</dd>
+                    <dt>Nota fiscal</dt><dd>@(ativo.NotaFiscal ?? "—")</dd>
+                    <dt>Garantia até</dt>
+                    <dd>
+                        @if (ativo.GarantiaAte.HasValue)
+                        {
+                            <span class="selo selo--@(ativo.EmGarantia ? "sucesso" : "neutro") selo--sem-ponto">
+                                @ativo.GarantiaAte.Value.ToString("dd/MM/yyyy")
+                            </span>
+                        }
+                        else
+                        {
+                            <text>—</text>
+                        }
+                    </dd>
+                    <dt>Idade</dt><dd>@(ativo.IdadeEmMeses > 0 ? $"{ativo.IdadeEmMeses} mês(es)" : "—")</dd>
+                    @if (!string.IsNullOrWhiteSpace(ativo.Contrato))
+                    {
+                        <dt>Contrato</dt><dd>@ativo.Contrato</dd>
+                    }
+                </dl>
+            </div>
+        </section>
+
+        <section class="cartao">
+            <div class="cartao__cabecalho"><h2>Lotação</h2></div>
+            <div class="cartao__corpo">
+                <dl class="lista-dados">
+                    <dt>Departamento</dt><dd>@(ativo.Departamento?.Nome ?? "—")</dd>
+                    <dt>Localização</dt><dd>@(ativo.Localizacao?.Nome ?? "—")</dd>
+                    @if (ativo.Localizacao?.Unidade is { } unidade)
+                    {
+                        <dt>Unidade</dt><dd>@unidade</dd>
+                    }
+                    <dt>Etiqueta</dt><dd>@(ativo.Etiqueta ?? "—")</dd>
+                </dl>
+            </div>
+        </section>
+
+        <section class="cartao">
+            <div class="cartao__cabecalho"><h2>Registro</h2></div>
+            <div class="cartao__corpo">
+                <dl class="lista-dados">
+                    <dt>Cadastrado em</dt><dd>@ativo.CriadoEm.ToString("dd/MM/yyyy HH:mm")</dd>
+                    <dt>Por</dt><dd>@(ativo.CriadoPor ?? "—")</dd>
+                    <dt>Última alteração</dt>
+                    <dd>@(ativo.AtualizadoEm?.ToString("dd/MM/yyyy HH:mm") ?? "—")</dd>
+                    <dt>Por</dt><dd>@(ativo.AtualizadoPor ?? "—")</dd>
+                </dl>
+            </div>
+        </section>
+    </div>
+</div>

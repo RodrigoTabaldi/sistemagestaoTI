@@ -1,0 +1,196 @@
+is_global = true
+build_property.TargetFramework = net8.0
+build_property.TargetFrameworkIdentifier = .NETCoreApp
+build_property.TargetFrameworkVersion = v8.0
+build_property.TargetPlatformMinVersion = 
+build_property.UsingMicrosoftNETSdkWeb = true
+build_property.ProjectTypeGuids = 
+build_property.InvariantGlobalization = 
+build_property.PlatformNeutralAssembly = 
+build_property.EnforceExtendedAnalyzerRules = 
+build_property.EntryPointFilePath = 
+build_property._SupportedPlatformList = Linux,macOS,Windows
+build_property.RootNamespace = Elcop.TI.Web
+build_property.RootNamespace = Elcop.TI.Web
+build_property.ProjectDir = C:\Users\rodri\source\repos\sistemagestaoTI\src\Elcop.TI.Web\
+build_property.EnableComHosting = 
+build_property.EnableGeneratedComInterfaceComImportInterop = 
+build_property.RazorLangVersion = 8.0
+build_property.SupportLocalizedComponentNames = 
+build_property.GenerateRazorMetadataSourceChecksumAttributes = true
+build_property.MSBuildProjectDirectory = C:\Users\rodri\source\repos\sistemagestaoTI\src\Elcop.TI.Web
+build_property._RazorSourceGeneratorDebug = 
+build_property.EffectiveAnalysisLevelStyle = 8.0
+build_property.EnableCodeStyleSeverity = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Ativos/Detalhes.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXRpdm9zXERldGFsaGVzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Ativos/Ficha.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXRpdm9zXEZpY2hhLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Ativos/Formulario.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXRpdm9zXEZvcm11bGFyaW8uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Ativos/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXRpdm9zXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Auditoria/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQXVkaXRvcmlhXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Cadastros/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ2FkYXN0cm9zXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Colaboradores/Detalhes.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29sYWJvcmFkb3Jlc1xEZXRhbGhlcy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Colaboradores/Formulario.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29sYWJvcmFkb3Jlc1xGb3JtdWxhcmlvLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Colaboradores/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29sYWJvcmFkb3Jlc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Componentes/_CampoFoto.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29tcG9uZW50ZXNcX0NhbXBvRm90by5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Conta/AcessoNegado.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29udGFcQWNlc3NvTmVnYWRvLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Conta/Entrar.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29udGFcRW50cmFyLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Conta/Perfil.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29udGFcUGVyZmlsLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Conta/Registrar.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29udGFcUmVnaXN0cmFyLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Conta/RegistroConcluido.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcQ29udGFcUmVnaXN0cm9Db25jbHVpZG8uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Demandas/Detalhes.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGVtYW5kYXNcRGV0YWxoZXMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Demandas/Formulario.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGVtYW5kYXNcRm9ybXVsYXJpby5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Demandas/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGVtYW5kYXNcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Demandas/Quadro.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRGVtYW5kYXNcUXVhZHJvLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Erro/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcRXJyb1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Movimentacoes/Detalhes.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTW92aW1lbnRhY29lc1xEZXRhbGhlcy5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Movimentacoes/Devolver.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTW92aW1lbnRhY29lc1xEZXZvbHZlci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Movimentacoes/Entregar.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTW92aW1lbnRhY29lc1xFbnRyZWdhci5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Movimentacoes/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTW92aW1lbnRhY29lc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Movimentacoes/Termo.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTW92aW1lbnRhY29lc1xUZXJtby5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Movimentacoes/Transferir.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcTW92aW1lbnRhY29lc1xUcmFuc2ZlcmlyLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Painel/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUGFpbmVsXEluZGV4LmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Relatorios/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcUmVsYXRvcmlvc1xJbmRleC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Shared/Components/MenuLateral/Default.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXENvbXBvbmVudHNcTWVudUxhdGVyYWxcRGVmYXVsdC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Shared/_GraficoBarras.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9HcmFmaWNvQmFycmFzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Shared/_GraficoLinha.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9HcmFmaWNvTGluaGEuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Shared/_GraficoRosca.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9HcmFmaWNvUm9zY2EuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Shared/_Icones.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9JY29uZXMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Shared/_Layout.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Shared/_LayoutAutenticacao.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXRBdXRlbnRpY2FjYW8uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Shared/_LayoutImpressao.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9MYXlvdXRJbXByZXNzYW8uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Shared/_Paginacao.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9QYWdpbmFjYW8uY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Shared/_Toasts.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9Ub2FzdHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Shared/_ValidationScriptsPartial.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcU2hhcmVkXF9WYWxpZGF0aW9uU2NyaXB0c1BhcnRpYWwuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Usuarios/Formulario.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVXN1YXJpb3NcRm9ybXVsYXJpby5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/Usuarios/Index.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcVXN1YXJpb3NcSW5kZXguY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/_ViewImports.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = Vmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 

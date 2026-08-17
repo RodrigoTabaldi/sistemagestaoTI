@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-tema="claro">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Titulo"] · ELCOP</title>
+    <link rel="icon" href="~/img/logo-elcop.png" />
+    <link rel="stylesheet" href="~/css/elcop.css" asp-append-version="true" />
+</head>
+<body style="background:var(--fundo-app)">
+    <partial name="_Icones" />
+
+    <div class="sem-impressao linha g-2" style="padding:1rem 1.5rem;max-width:880px;margin:0 auto">
+        <a class="btn btn--fantasma btn--pequeno" href="javascript:history.back()">
+            <svg viewBox="0 0 24 24"><use href="#i-seta-esquerda" /></svg> Voltar
+        </a>
+        <div class="crescer"></div>
+        <button type="button" class="btn btn--primario btn--pequeno" data-acao="imprimir">
+            <svg viewBox="0 0 24 24"><use href="#i-impressao" /></svg> Imprimir
+        </button>
+    </div>
+
+    @RenderBody()
+
+    <script src="~/js/elcop.js" asp-append-version="true"></script>
+</body>
+</html>

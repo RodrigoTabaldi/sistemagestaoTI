@@ -1,0 +1,134 @@
+@model ColaboradorFormViewModel
+@{
+    ViewData["Titulo"] = Model.Titulo;
+    ViewData["Subtitulo"] = Model.Edicao ? Model.Colaborador.NomeCompleto : "Cadastro de pessoa";
+}
+
+<div class="migalhas">
+    <a asp-action="Index">Colaboradores</a> <span>/</span> <span>@Model.Titulo</span>
+</div>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>@Model.Titulo</h1>
+        <p>A matrícula e o e-mail corporativo são únicos e identificam o colaborador nos termos de responsabilidade.</p>
+    </div>
+</div>
+
+<form asp-action="@(Model.Edicao ? "Editar" : "Criar")" asp-route-id="@(Model.Edicao ? Model.Colaborador.Id : null)"
+      method="post" enctype="multipart/form-data" novalidate>
+    <input type="hidden" asp-for="Colaborador.Id" />
+    <input type="hidden" asp-for="Colaborador.CriadoEm" />
+    @* Preserva a foto já cadastrada quando o formulário é enviado sem trocar a imagem. *@
+    <input type="hidden" asp-for="Colaborador.FotoUrl" />
+
+    <div asp-validation-summary="ModelOnly" class="alerta alerta--critico mb-3"
+         style="@(ViewData.ModelState.ErrorCount > 0 ? "" : "display:none")">
+        <svg viewBox="0 0 24 24"><use href="#i-alerta" /></svg>
+        <div class="validation-summary-errors crescer"></div>
+    </div>
+
+    <fieldset class="secao">
+        <legend><svg viewBox="0 0 24 24"><use href="#i-usuario" /></svg> Dados pessoais</legend>
+
+        <partial name="_CampoFoto" model="Model.Colaborador.FotoUrl" />
+
+        <div class="form-grade">
+            <div class="campo col-6">
+                <label asp-for="Colaborador.NomeCompleto"></label>
+                <input asp-for="Colaborador.NomeCompleto" class="entrada" placeholder="Nome como consta no crachá" />
+                <span asp-validation-for="Colaborador.NomeCompleto"></span>
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Colaborador.Matricula"></label>
+                <input asp-for="Colaborador.Matricula" class="entrada mono" placeholder="00000"
+                       data-verificar="@Url.Action("ValidarMatricula")" data-verificar-campo="matricula" />
+                <span asp-validation-for="Colaborador.Matricula"></span>
+                <span class="field-validation-error" data-verificar-mensagem></span>
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Colaborador.Status"></label>
+                <select asp-for="Colaborador.Status" class="entrada"
+                        asp-items="ListaDeEnum<StatusColaborador>(Model.Colaborador.Status)"></select>
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Colaborador.Cpf"></label>
+                <input asp-for="Colaborador.Cpf" class="entrada mono" data-mascara="cpf" placeholder="000.000.000-00" />
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Colaborador.Rg"></label>
+                <input asp-for="Colaborador.Rg" class="entrada" />
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Colaborador.DataAdmissao"></label>
+                <input asp-for="Colaborador.DataAdmissao" class="entrada" type="date" />
+            </div>
+            <div class="campo col-3">
+                <label asp-for="Colaborador.DataDesligamento"></label>
+                <input asp-for="Colaborador.DataDesligamento" class="entrada" type="date" />
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset class="secao">
+        <legend><svg viewBox="0 0 24 24"><use href="#i-predio" /></svg> Contato e lotação</legend>
+        <div class="form-grade">
+            <div class="campo col-4">
+                <label asp-for="Colaborador.Email"></label>
+                <input asp-for="Colaborador.Email" class="entrada" type="email" placeholder="nome.sobrenome@@elcop.com.br"
+                       data-verificar="@Url.Action("ValidarEmail")" data-verificar-campo="email" />
+                <span asp-validation-for="Colaborador.Email"></span>
+                <span class="field-validation-error" data-verificar-mensagem></span>
+            </div>
+            <div class="campo col-4">
+                <label asp-for="Colaborador.EmailPessoal"></label>
+                <input asp-for="Colaborador.EmailPessoal" class="entrada" type="email" />
+                <span asp-validation-for="Colaborador.EmailPessoal"></span>
+            </div>
+            <div class="campo col-2">
+                <label asp-for="Colaborador.Telefone"></label>
+                <input asp-for="Colaborador.Telefone" class="entrada" data-mascara="telefone" placeholder="(00) 0000-0000" />
+            </div>
+            <div class="campo col-2">
+                <label asp-for="Colaborador.Celular"></label>
+                <input asp-for="Colaborador.Celular" class="entrada" data-mascara="telefone" placeholder="(00) 00000-0000" />
+            </div>
+            <div class="campo col-4">
+                <label asp-for="Colaborador.Cargo"></label>
+                <input asp-for="Colaborador.Cargo" class="entrada" placeholder="Analista, Técnico, Supervisor…" />
+            </div>
+            <div class="campo col-4">
+                <label asp-for="Colaborador.DepartamentoId"></label>
+                <select asp-for="Colaborador.DepartamentoId" class="entrada" asp-items="Model.Listas.Departamentos">
+                    <option value="">Não informado</option>
+                </select>
+            </div>
+            <div class="campo col-4">
+                <label asp-for="Colaborador.LocalizacaoId"></label>
+                <select asp-for="Colaborador.LocalizacaoId" class="entrada" asp-items="Model.Listas.Localizacoes">
+                    <option value="">Não informada</option>
+                </select>
+            </div>
+            <div class="campo col-6">
+                <label asp-for="Colaborador.GestorImediato"></label>
+                <input asp-for="Colaborador.GestorImediato" class="entrada" />
+            </div>
+            <div class="campo col-12">
+                <label asp-for="Colaborador.Observacoes"></label>
+                <textarea asp-for="Colaborador.Observacoes" class="entrada" rows="3"></textarea>
+            </div>
+        </div>
+    </fieldset>
+
+    <div class="barra-acoes">
+        <a class="btn btn--contorno" asp-action="Index">Cancelar</a>
+        <button type="submit" class="btn btn--primario">
+            <svg viewBox="0 0 24 24"><use href="#i-check" /></svg>
+            @(Model.Edicao ? "Salvar alterações" : "Cadastrar colaborador")
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,220 @@
+@model Movimentacao
+@{
+    ViewData["Titulo"] = Model.Protocolo;
+    ViewData["Subtitulo"] = $"{Model.Tipo.ObterNome()} · {Model.Ativo?.DescricaoCurta}";
+    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+}
+
+<div class="migalhas">
+    <a asp-action="Index">Movimentações</a> <span>/</span> <span>@Model.Protocolo</span>
+</div>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>Termo @Model.Protocolo</h1>
+        <p class="linha g-2 envolve">
+            <span class="selo selo--@ClasseStatusMovimentacao(Model.Status)">@Model.Status.ObterNome()</span>
+            <span class="chip">@Model.Tipo.ObterNome()</span>
+            @if (Model.TermoAssinado)
+            {
+                <span class="selo selo--sucesso selo--sem-ponto">termo assinado</span>
+            }
+            @if (Model.ComAvaria)
+            {
+                <span class="selo selo--perigo">devolvido com avaria</span>
+            }
+        </p>
+    </div>
+
+    <div class="cabecalho-pagina__acoes">
+        <a class="btn btn--contorno" asp-action="Termo" asp-route-id="@Model.Id">
+            <svg viewBox="0 0 24 24"><use href="#i-impressao" /></svg> Imprimir termo
+        </a>
+
+        @if (podeOperar && Model.EstaEmAberto)
+        {
+            <a class="btn btn--sucesso" asp-action="Devolver" asp-route-id="@Model.Id">
+                <svg viewBox="0 0 24 24"><use href="#i-entrada" /></svg> Registrar devolução
+            </a>
+
+            <div class="suspenso">
+                <button type="button" class="btn btn--contorno" data-suspenso="menu-movimentacao">Mais ações</button>
+                <div class="suspenso__conteudo" id="menu-movimentacao" hidden>
+                    <a class="suspenso__item" asp-action="Transferir" asp-route-id="@Model.Id">
+                        <svg viewBox="0 0 24 24"><use href="#i-troca" /></svg> Transferir para outro colaborador
+                    </a>
+                    <div class="suspenso__separador"></div>
+                    <form asp-action="Cancelar" asp-route-id="@Model.Id" method="post"
+                          data-confirmar="O termo será cancelado e o ativo voltará ao estoque. Use apenas para corrigir lançamentos indevidos."
+                          data-confirmar-titulo="Cancelar movimentação" data-confirmar-ok="Cancelar termo" data-confirmar-perigo="true">
+                        <input type="hidden" name="motivo" value="Cancelamento realizado pela tela do termo." />
+                        <button type="submit" class="suspenso__item suspenso__item--perigo">
+                            <svg viewBox="0 0 24 24"><use href="#i-x" /></svg> Cancelar movimentação
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (Model.EstaAtrasada)
+{
+    <div class="alerta alerta--critico mb-4">
+        <svg viewBox="0 0 24 24"><use href="#i-alerta" /></svg>
+        <div class="crescer">
+            <strong>Devolução em atraso há @Model.DiasDeAtraso dia(s)</strong>
+            <div class="pequeno texto-suave">
+                Previsão original: @Model.DataPrevistaDevolucao?.ToString("dd/MM/yyyy").
+            </div>
+        </div>
+        @if (podeOperar)
+        {
+            <a class="btn btn--perigo btn--pequeno" asp-action="Devolver" asp-route-id="@Model.Id">Devolver agora</a>
+        }
+    </div>
+}
+
+<div class="grade-2">
+    <section class="cartao">
+        <div class="cartao__cabecalho">
+            <h2>Equipamento</h2>
+            <div class="acoes">
+                <a class="btn btn--fantasma btn--pequeno" asp-controller="Ativos" asp-action="Detalhes"
+                   asp-route-id="@Model.AtivoId">Abrir ativo <svg viewBox="0 0 24 24"><use href="#i-seta-direita" /></svg></a>
+            </div>
+        </div>
+        <div class="cartao__corpo">
+            <div class="linha g-3 mb-3">
+                <span class="icone-tipo" style="width:46px;height:46px">
+                    <svg viewBox="0 0 24 24" width="23" height="23">
+                        <use href="#@("i-" + IconeTipoAtivo(Model.Ativo?.Tipo ?? TipoAtivo.Outro))" />
+                    </svg>
+                </span>
+                <div>
+                    <strong class="texto-forte">@Model.Ativo?.DescricaoCurta</strong>
+                    <div class="pequeno texto-suave">@Model.Ativo?.Tipo.ObterNome()</div>
+                </div>
+            </div>
+
+            <dl class="lista-dados">
+                <dt>Patrimônio</dt><dd class="mono">@Model.Ativo?.Patrimonio</dd>
+                <dt>Número de série</dt><dd class="mono">@(Model.Ativo?.NumeroSerie ?? "—")</dd>
+                @if (!string.IsNullOrWhiteSpace(Model.Ativo?.Imei))
+                {
+                    <dt>IMEI</dt><dd class="mono">@Model.Ativo.Imei</dd>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.Ativo?.NumeroLinha))
+                {
+                    <dt>Linha</dt><dd>@Model.Ativo.NumeroLinha</dd>
+                }
+                <dt>Fornecedor</dt><dd>@(Model.Ativo?.Fornecedor?.Nome ?? "—")</dd>
+            </dl>
+        </div>
+    </section>
+
+    <section class="cartao">
+        <div class="cartao__cabecalho">
+            <h2>Colaborador</h2>
+            <div class="acoes">
+                <a class="btn btn--fantasma btn--pequeno" asp-controller="Colaboradores" asp-action="Detalhes"
+                   asp-route-id="@Model.ColaboradorId">Abrir cadastro <svg viewBox="0 0 24 24"><use href="#i-seta-direita" /></svg></a>
+            </div>
+        </div>
+        <div class="cartao__corpo">
+            <div class="linha g-3 mb-3">
+                <span class="avatar" style="background:@CorAvatar(Model.Colaborador?.NomeCompleto)">
+                    @Model.Colaborador?.Iniciais
+                </span>
+                <div>
+                    <strong class="texto-forte">@Model.Colaborador?.NomeCompleto</strong>
+                    <div class="pequeno texto-suave">@(Model.Colaborador?.Cargo ?? "—")</div>
+                </div>
+            </div>
+
+            <dl class="lista-dados">
+                <dt>Matrícula</dt><dd class="mono">@Model.Colaborador?.Matricula</dd>
+                <dt>E-mail</dt><dd>@Model.Colaborador?.Email</dd>
+                <dt>Departamento</dt><dd>@(Model.Colaborador?.Departamento?.Nome ?? "—")</dd>
+                <dt>Localização</dt><dd>@(Model.Colaborador?.Localizacao?.Nome ?? "—")</dd>
+                <dt>Contato</dt><dd>@(Model.Colaborador?.Celular ?? Model.Colaborador?.Telefone ?? "—")</dd>
+            </dl>
+        </div>
+    </section>
+</div>
+
+<div class="grade-2 mt-4">
+    <section class="cartao">
+        <div class="cartao__cabecalho">
+            <h2><svg viewBox="0 0 24 24" width="18" height="18" class="texto-marca"><use href="#i-saida" /></svg> Retirada</h2>
+        </div>
+        <div class="cartao__corpo">
+            <dl class="lista-dados">
+                <dt>Data e hora</dt><dd>@Model.DataRetirada.ToString("dd/MM/yyyy 'às' HH:mm")</dd>
+                <dt>Previsão de devolução</dt>
+                <dd>@(Model.DataPrevistaDevolucao?.ToString("dd/MM/yyyy") ?? "Indeterminada")</dd>
+                <dt>Condição na retirada</dt>
+                <dd><span class="selo selo--@ClasseCondicao(Model.CondicaoRetirada) selo--sem-ponto">@Model.CondicaoRetirada.ObterNome()</span></dd>
+                <dt>Acessórios entregues</dt>
+                <dd>@(string.IsNullOrWhiteSpace(Model.AcessoriosEntregues) ? "—" : Model.AcessoriosEntregues)</dd>
+                <dt>Responsável pela entrega</dt><dd>@(Model.ResponsavelEntrega ?? "—")</dd>
+                <dt>Local</dt><dd>@(Model.LocalEntrega ?? "—")</dd>
+                <dt>Termo assinado</dt><dd>@(Model.TermoAssinado ? "Sim" : "Não")</dd>
+                @if (!string.IsNullOrWhiteSpace(Model.ObservacoesRetirada))
+                {
+                    <dt>Observações</dt><dd style="white-space:pre-line">@Model.ObservacoesRetirada</dd>
+                }
+            </dl>
+        </div>
+    </section>
+
+    <section class="cartao">
+        <div class="cartao__cabecalho">
+            <h2><svg viewBox="0 0 24 24" width="18" height="18" class="texto-sucesso"><use href="#i-entrada" /></svg> Devolução</h2>
+        </div>
+        <div class="cartao__corpo">
+            @if (Model.DataDevolucao.HasValue)
+            {
+                <dl class="lista-dados">
+                    <dt>Data e hora</dt><dd>@Model.DataDevolucao.Value.ToString("dd/MM/yyyy 'às' HH:mm")</dd>
+                    <dt>Tempo em posse</dt><dd>@Model.DiasEmPosse dia(s)</dd>
+                    <dt>Condição na devolução</dt>
+                    <dd>
+                        @if (Model.CondicaoDevolucao.HasValue)
+                        {
+                            <span class="selo selo--@ClasseCondicao(Model.CondicaoDevolucao.Value) selo--sem-ponto">
+                                @Model.CondicaoDevolucao.Value.ObterNome()
+                            </span>
+                        }
+                        else
+                        {
+                            <text>—</text>
+                        }
+                    </dd>
+                    <dt>Acessórios devolvidos</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.AcessoriosDevolvidos) ? "—" : Model.AcessoriosDevolvidos)</dd>
+                    <dt>Recebido por</dt><dd>@(Model.ResponsavelRecebimento ?? "—")</dd>
+                    <dt>Avaria</dt><dd>@(Model.ComAvaria ? "Sim" : "Não")</dd>
+                    @if (!string.IsNullOrWhiteSpace(Model.ObservacoesDevolucao))
+                    {
+                        <dt>Observações</dt><dd style="white-space:pre-line">@Model.ObservacoesDevolucao</dd>
+                    }
+                </dl>
+            }
+            else
+            {
+                <div class="vazio" style="padding:2rem 1rem">
+                    <svg viewBox="0 0 24 24"><use href="#i-relogio" /></svg>
+                    <h3>Ainda em posse do colaborador</h3>
+                    <p>A devolução será registrada quando o equipamento retornar ao estoque de TI.</p>
+                    @if (podeOperar)
+                    {
+                        <a class="btn btn--sucesso btn--pequeno" asp-action="Devolver" asp-route-id="@Model.Id">
+                            Registrar devolução
+                        </a>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+</div>

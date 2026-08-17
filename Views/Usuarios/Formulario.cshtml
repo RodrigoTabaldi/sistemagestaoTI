@@ -1,0 +1,117 @@
+@model UsuarioViewModel
+@{
+    ViewData["Titulo"] = Model.Edicao ? "Editar usuário" : "Novo usuário";
+    ViewData["Subtitulo"] = Model.Edicao ? Model.NomeCompleto : "Conta de acesso ao sistema";
+}
+
+<div class="migalhas">
+    <a asp-action="Index">Usuários</a> <span>/</span> <span>@ViewData["Titulo"]</span>
+</div>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>@ViewData["Titulo"]</h1>
+        <p>O e-mail é o login. A senha deve ter no mínimo 8 caracteres, com letra maiúscula e número.</p>
+    </div>
+</div>
+
+<form asp-action="@(Model.Edicao ? "Editar" : "Criar")" method="post" novalidate>
+    <input type="hidden" asp-for="Id" />
+
+    <div asp-validation-summary="ModelOnly" class="alerta alerta--critico mb-3"
+         style="@(ViewData.ModelState.ErrorCount > 0 ? "" : "display:none")">
+        <svg viewBox="0 0 24 24"><use href="#i-alerta" /></svg>
+        <div class="validation-summary-errors crescer"></div>
+    </div>
+
+    <div class="grade-painel">
+        <div>
+            <fieldset class="secao">
+                <legend><svg viewBox="0 0 24 24"><use href="#i-usuario" /></svg> Identificação</legend>
+                <div class="form-grade">
+                    <div class="campo col-8">
+                        <label asp-for="NomeCompleto"></label>
+                        <input asp-for="NomeCompleto" class="entrada" />
+                        <span asp-validation-for="NomeCompleto"></span>
+                    </div>
+                    <div class="campo col-4">
+                        <label asp-for="Cargo"></label>
+                        <input asp-for="Cargo" class="entrada" placeholder="Analista de Suporte" />
+                    </div>
+                    <div class="campo col-8">
+                        <label asp-for="Email"></label>
+                        <input asp-for="Email" class="entrada" type="email" placeholder="nome@@elcop.com.br" />
+                        <span asp-validation-for="Email"></span>
+                    </div>
+                    <div class="campo col-4">
+                        <label asp-for="Perfil"></label>
+                        <select asp-for="Perfil" class="entrada">
+                            @foreach (var perfil in Perfis.Todos)
+                            {
+                                <option value="@perfil" selected="@(Model.Perfil == perfil)">@perfil</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Perfil"></span>
+                    </div>
+                    <div class="campo col-12">
+                        <label class="interruptor">
+                            <input asp-for="Habilitado" type="checkbox" />
+                            <span class="interruptor__trilho"></span>
+                            <span class="pequeno">Usuário habilitado a acessar o sistema</span>
+                        </label>
+                    </div>
+                </div>
+            </fieldset>
+
+            <fieldset class="secao">
+                <legend><svg viewBox="0 0 24 24"><use href="#i-escudo" /></svg> Senha</legend>
+                <div class="form-grade">
+                    <div class="campo col-6">
+                        <label asp-for="Senha"></label>
+                        <input asp-for="Senha" class="entrada" type="password" autocomplete="new-password"
+                               placeholder="@(Model.Edicao ? "Deixe em branco para manter a atual" : "Senha inicial")" />
+                        <span asp-validation-for="Senha"></span>
+                    </div>
+                    <div class="campo col-6">
+                        <label asp-for="ConfirmarSenha"></label>
+                        <input asp-for="ConfirmarSenha" class="entrada" type="password" autocomplete="new-password" />
+                        <span asp-validation-for="ConfirmarSenha"></span>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+
+        <section class="cartao" style="align-self:start">
+            <div class="cartao__cabecalho"><h2>Perfis de acesso</h2></div>
+            <div class="cartao__corpo pilha g-3">
+                @foreach (var (perfil, descricao) in Perfis.Descricoes)
+                {
+                    <div>
+                        <strong class="pequeno texto-forte">@perfil</strong>
+                        <p class="minusculo texto-suave" style="margin:.15rem 0 0">@descricao</p>
+                    </div>
+                }
+
+                @if (Model.Edicao && Model.UltimoAcesso.HasValue)
+                {
+                    <div class="alerta alerta--info">
+                        <svg viewBox="0 0 24 24"><use href="#i-relogio" /></svg>
+                        <div class="pequeno">Último acesso em @Model.UltimoAcesso.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                    </div>
+                }
+            </div>
+        </section>
+    </div>
+
+    <div class="barra-acoes">
+        <a class="btn btn--contorno" asp-action="Index">Cancelar</a>
+        <button type="submit" class="btn btn--primario">
+            <svg viewBox="0 0 24 24"><use href="#i-check" /></svg>
+            @(Model.Edicao ? "Salvar alterações" : "Criar usuário")
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

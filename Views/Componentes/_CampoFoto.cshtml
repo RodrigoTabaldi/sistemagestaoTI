@@ -1,0 +1,37 @@
+@*
+    Campo de foto compartilhado pelos formulários de ativo e de colaborador.
+
+    O formulário que o inclui precisa de enctype="multipart/form-data" e de um
+    <input type="hidden"> com a FotoUrl atual, para o valor sobreviver ao post
+    quando nenhuma imagem nova é enviada.
+
+    Model: a URL da foto já gravada (ou null).
+*@
+@model string
+
+<div class="campo-foto">
+    <div class="campo-foto__previa" data-previa-foto>
+        @if (!string.IsNullOrWhiteSpace(Model))
+        {
+            <img src="@Model" alt="Foto atual" />
+        }
+        else
+        {
+            <svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-imagem" /></svg>
+        }
+    </div>
+
+    <div class="campo-foto__controles">
+        <label class="btn btn--contorno btn--pequeno" for="campo-foto-arquivo">
+            <svg viewBox="0 0 24 24"><use href="#i-upload" /></svg>
+            @(string.IsNullOrWhiteSpace(Model) ? "Escolher imagem" : "Trocar imagem")
+        </label>
+
+        <input type="file" name="foto" id="campo-foto-arquivo" class="visualmente-oculto"
+               accept=".jpg,.jpeg,.png,.webp" data-campo-foto />
+
+        <span class="campo-foto__dica" data-nome-foto>JPG, PNG ou WebP · até 4 MB</span>
+        @* O helper já aplica field-validation-error/valid conforme o estado. *@
+        @Html.ValidationMessage("Foto")
+    </div>
+</div>

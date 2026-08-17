@@ -1,0 +1,102 @@
+@model Movimentacao
+@{
+    Layout = "_LayoutImpressao";
+    ViewData["Titulo"] = $"Termo {Model.Protocolo}";
+    var colaborador = Model.Colaborador;
+    var ativo = Model.Ativo;
+}
+
+<article class="folha">
+    <header class="folha__cabecalho">
+        <img src="~/img/logo-elcop.png" alt="ELCOP" />
+        <div class="crescer">
+            <h1>Termo de responsabilidade de equipamento</h1>
+            <span>Protocolo @Model.Protocolo · @Model.Tipo.ObterNome()</span>
+        </div>
+        <div style="text-align:right;font-size:.8rem;color:#6E6E78">
+            Emitido em<br /><strong style="color:#1A1A1D">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</strong>
+        </div>
+    </header>
+
+    <h2>Colaborador responsável</h2>
+    <table>
+        <tr><th>Nome completo</th><td>@colaborador?.NomeCompleto</td></tr>
+        <tr><th>Matrícula</th><td>@colaborador?.Matricula</td></tr>
+        <tr><th>CPF</th><td>@(colaborador?.Cpf ?? "—")</td></tr>
+        <tr><th>E-mail corporativo</th><td>@colaborador?.Email</td></tr>
+        <tr><th>Cargo / Departamento</th><td>@(colaborador?.Cargo ?? "—") · @(colaborador?.Departamento?.Nome ?? "—")</td></tr>
+        <tr><th>Localização</th><td>@(colaborador?.Localizacao?.Nome ?? "—")</td></tr>
+    </table>
+
+    <h2>Equipamento entregue</h2>
+    <table>
+        <tr><th>Patrimônio</th><td>@ativo?.Patrimonio</td></tr>
+        <tr><th>Tipo</th><td>@ativo?.Tipo.ObterNome()</td></tr>
+        <tr><th>Marca / Modelo</th><td>@ativo?.Marca @ativo?.Modelo</td></tr>
+        <tr><th>Número de série</th><td>@(ativo?.NumeroSerie ?? "—")</td></tr>
+        @if (ativo is not null && ativo.ExigeIdentificacaoMovel)
+        {
+            <tr><th>IMEI</th><td>@(ativo.Imei ?? "—")@(string.IsNullOrWhiteSpace(ativo.Imei2) ? "" : $" / {ativo.Imei2}")</td></tr>
+            <tr><th>Linha / Operadora</th><td>@(ativo.NumeroLinha ?? "—") @(ativo.Operadora is null ? "" : $"· {ativo.Operadora}")</td></tr>
+        }
+        <tr><th>Acessórios</th><td>@(string.IsNullOrWhiteSpace(Model.AcessoriosEntregues) ? "Nenhum" : Model.AcessoriosEntregues)</td></tr>
+        <tr><th>Condição na entrega</th><td>@Model.CondicaoRetirada.ObterNome()</td></tr>
+        @if (ativo?.ValorAquisicao is { } valor)
+        {
+            <tr><th>Valor de referência</th><td>@valor.ToString("C")</td></tr>
+        }
+    </table>
+
+    <h2>Dados da retirada</h2>
+    <table>
+        <tr><th>Data e hora</th><td>@Model.DataRetirada.ToString("dd/MM/yyyy 'às' HH:mm")</td></tr>
+        <tr><th>Previsão de devolução</th><td>@(Model.DataPrevistaDevolucao?.ToString("dd/MM/yyyy") ?? "Por tempo indeterminado")</td></tr>
+        <tr><th>Local da entrega</th><td>@(Model.LocalEntrega ?? "—")</td></tr>
+        <tr><th>Entregue por</th><td>@(Model.ResponsavelEntrega ?? "—")</td></tr>
+        @if (!string.IsNullOrWhiteSpace(Model.ObservacoesRetirada))
+        {
+            <tr><th>Observações</th><td>@Model.ObservacoesRetirada</td></tr>
+        }
+    </table>
+
+    <p class="folha__termo">
+        Declaro haver recebido da <strong>ELCOP</strong> o equipamento descrito acima, em perfeitas condições de uso,
+        para o desempenho exclusivo das minhas atividades profissionais. Comprometo-me a zelar pela sua guarda e
+        conservação, a utilizá-lo somente para fins de trabalho e a comunicar imediatamente à equipe de Tecnologia da
+        Informação qualquer ocorrência de defeito, extravio, furto, roubo ou dano.
+    </p>
+    <p class="folha__termo">
+        Estou ciente de que o equipamento é patrimônio da empresa e deverá ser devolvido nas mesmas condições em que
+        foi recebido — ressalvado o desgaste natural de uso — sempre que solicitado pela empresa, no encerramento do
+        prazo previsto ou por ocasião do desligamento. Declaro ainda estar ciente de que danos decorrentes de mau uso,
+        negligência ou imprudência poderão ser objeto de ressarcimento, nos termos da legislação aplicável e das
+        políticas internas da ELCOP.
+    </p>
+
+    @if (Model.DataDevolucao.HasValue)
+    {
+        <h2>Devolução registrada</h2>
+        <table>
+            <tr><th>Data e hora</th><td>@Model.DataDevolucao.Value.ToString("dd/MM/yyyy 'às' HH:mm")</td></tr>
+            <tr><th>Condição na devolução</th><td>@(Model.CondicaoDevolucao?.ObterNome() ?? "—")</td></tr>
+            <tr><th>Acessórios devolvidos</th><td>@(string.IsNullOrWhiteSpace(Model.AcessoriosDevolvidos) ? "—" : Model.AcessoriosDevolvidos)</td></tr>
+            <tr><th>Recebido por</th><td>@(Model.ResponsavelRecebimento ?? "—")</td></tr>
+            <tr><th>Avaria constatada</th><td>@(Model.ComAvaria ? "Sim" : "Não")</td></tr>
+            @if (!string.IsNullOrWhiteSpace(Model.ObservacoesDevolucao))
+            {
+                <tr><th>Observações</th><td>@Model.ObservacoesDevolucao</td></tr>
+            }
+        </table>
+    }
+
+    <div class="folha__assinaturas">
+        <div class="folha__assinatura">
+            @colaborador?.NomeCompleto<br />
+            <span style="color:#6E6E78">Matrícula @colaborador?.Matricula · Colaborador</span>
+        </div>
+        <div class="folha__assinatura">
+            @(Model.ResponsavelEntrega ?? "Tecnologia da Informação")<br />
+            <span style="color:#6E6E78">Responsável pela entrega · TI</span>
+        </div>
+    </div>
+</article>

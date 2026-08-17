@@ -1,0 +1,23 @@
+@*
+    As mensagens do TempData viram elementos "semente" que o elcop.js converte
+    em toasts animados e depois remove do DOM.
+*@
+@{
+    var mensagens = new (string Chave, string Tipo, string Titulo)[]
+    {
+        (Notificacao.ChaveSucesso, "sucesso", "Tudo certo"),
+        (Notificacao.ChaveErro, "erro", "Não foi possível concluir"),
+        (Notificacao.ChaveAviso, "aviso", "Atenção"),
+        (Notificacao.ChaveInfo, "info", "Informação")
+    };
+}
+
+<div class="toasts" aria-live="polite" aria-atomic="true"></div>
+
+@foreach (var (chave, tipo, titulo) in mensagens)
+{
+    if (TempData[chave] is string mensagem && !string.IsNullOrWhiteSpace(mensagem))
+    {
+        <span hidden data-toast="@tipo" data-toast-titulo="@titulo" data-toast-mensagem="@mensagem"></span>
+    }
+}

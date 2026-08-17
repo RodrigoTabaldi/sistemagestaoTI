@@ -1,0 +1,119 @@
+@model Elcop.TI.Web.ViewComponents.ContadoresMenu
+@{
+    var controlador = (ViewContext.RouteData.Values["controller"] as string) ?? "Painel";
+    var acao = (ViewContext.RouteData.Values["action"] as string) ?? "Index";
+
+    // Marca o item quando a rota atual bate com ele.
+    //   act    → exige essa ação exata (para itens que apontam a uma ação específica)
+    //   exceto → ações do mesmo controller que pertencem a OUTRO item do menu
+    //
+    // Sem o 'exceto', um item genérico do controller acenderia junto com o item
+    // específico: em /Movimentacoes/Entregar, "Movimentações" e "Registrar entrega"
+    // ficavam ambos marcados.
+    string Ativo(string ctrl, string? act = null, string[]? exceto = null)
+    {
+        if (!controlador.Equals(ctrl, StringComparison.OrdinalIgnoreCase))
+            return string.Empty;
+
+        if (act is not null)
+            return acao.Equals(act, StringComparison.OrdinalIgnoreCase) ? "ativo" : string.Empty;
+
+        if (exceto is not null
+            && exceto.Any(a => acao.Equals(a, StringComparison.OrdinalIgnoreCase)))
+            return string.Empty;
+
+        return "ativo";
+    }
+
+    var ehAdmin = User.IsInRole(Perfis.Administrador);
+    var podeOperar = ehAdmin || User.IsInRole(Perfis.Tecnico);
+}
+
+<aside class="sidebar" aria-label="Menu principal">
+    <div class="sidebar__marca">
+        <span class="sidebar__logo">
+            <img src="~/img/logo-elcop.png" alt="ELCOP" />
+        </span>
+        <span class="sidebar__titulo">
+            <strong>ELCOP</strong>
+            <span>Gestão de TI</span>
+        </span>
+    </div>
+
+    <nav class="sidebar__nav">
+        <div class="sidebar__grupo">Visão geral</div>
+        <a class="sidebar__item @Ativo("Painel")" asp-controller="Painel" asp-action="Index">
+            <svg viewBox="0 0 24 24"><use href="#i-painel" /></svg><span>Painel</span>
+        </a>
+
+        <div class="sidebar__grupo">Inventário</div>
+        <a class="sidebar__item @Ativo("Ativos")" asp-controller="Ativos" asp-action="Index">
+            <svg viewBox="0 0 24 24"><use href="#i-caixa" /></svg><span>Ativos</span>
+        </a>
+        <a class="sidebar__item @Ativo("Colaboradores")" asp-controller="Colaboradores" asp-action="Index">
+            <svg viewBox="0 0 24 24"><use href="#i-usuarios" /></svg><span>Colaboradores</span>
+        </a>
+        @* new[]{...} em vez de [...]: o Razor em runtime não compila collection expressions. *@
+        <a class="sidebar__item @Ativo("Movimentacoes", exceto: new[] { "Entregar" })"
+           asp-controller="Movimentacoes" asp-action="Index">
+            <svg viewBox="0 0 24 24"><use href="#i-troca" /></svg>
+            <span>Movimentações</span>
+            @if (Model.DevolucoesAtrasadas > 0)
+            {
+                <span class="sidebar__contador sidebar__contador--alerta"
+                      title="@Model.DevolucoesAtrasadas devolução(ões) em atraso">@Model.DevolucoesAtrasadas</span>
+            }
+            else if (Model.MovimentacoesEmAberto > 0)
+            {
+                <span class="sidebar__contador">@Model.MovimentacoesEmAberto</span>
+            }
+        </a>
+        @if (podeOperar)
+        {
+            <a class="sidebar__item @Ativo("Movimentacoes", "Entregar")" asp-controller="Movimentacoes" asp-action="Entregar">
+                <svg viewBox="0 0 24 24"><use href="#i-saida" /></svg><span>Registrar entrega</span>
+            </a>
+        }
+
+        <div class="sidebar__grupo">Atendimento</div>
+        <a class="sidebar__item @Ativo("Demandas", exceto: new[] { "Quadro" })"
+           asp-controller="Demandas" asp-action="Index">
+            <svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg>
+            <span>Demandas</span>
+            @if (Model.DemandasAbertas > 0)
+            {
+                <span class="sidebar__contador">@Model.DemandasAbertas</span>
+            }
+        </a>
+        <a class="sidebar__item @Ativo("Demandas", "Quadro")" asp-controller="Demandas" asp-action="Quadro">
+            <svg viewBox="0 0 24 24"><use href="#i-quadro" /></svg><span>Quadro kanban</span>
+        </a>
+
+        <div class="sidebar__grupo">Análise</div>
+        <a class="sidebar__item @Ativo("Relatorios")" asp-controller="Relatorios" asp-action="Index">
+            <svg viewBox="0 0 24 24"><use href="#i-relatorio" /></svg><span>Relatórios</span>
+        </a>
+
+        @if (ehAdmin)
+        {
+            <div class="sidebar__grupo">Administração</div>
+            <a class="sidebar__item @Ativo("Cadastros")" asp-controller="Cadastros" asp-action="Index">
+                <svg viewBox="0 0 24 24"><use href="#i-config" /></svg><span>Cadastros de apoio</span>
+            </a>
+            <a class="sidebar__item @Ativo("Usuarios")" asp-controller="Usuarios" asp-action="Index">
+                <svg viewBox="0 0 24 24"><use href="#i-escudo" /></svg><span>Usuários</span>
+            </a>
+            <a class="sidebar__item @Ativo("Auditoria")" asp-controller="Auditoria" asp-action="Index">
+                <svg viewBox="0 0 24 24"><use href="#i-auditoria" /></svg><span>Auditoria</span>
+            </a>
+        }
+    </nav>
+
+    <div class="sidebar__rodape">
+        <button type="button" class="btn btn--fantasma btn--icone recolher-menu" data-acao="recolher-menu"
+                title="Recolher menu" aria-label="Recolher menu" style="color:var(--texto-sidebar)">
+            <svg viewBox="0 0 24 24" width="18" height="18"><use href="#i-recolher" /></svg>
+        </button>
+        <span class="usuario-info minusculo" style="color:var(--texto-tenue)">v1.0 · @DateTime.Now.Year</span>
+    </div>
+</aside>

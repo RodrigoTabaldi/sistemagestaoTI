@@ -1,0 +1,235 @@
+@model ListagemDemandasViewModel
+@{
+    ViewData["Titulo"] = "Demandas";
+    ViewData["Subtitulo"] = $"{Model.TotalAbertas} em aberto · {Model.TotalAtrasadas} fora do prazo";
+    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+}
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1><svg viewBox="0 0 24 24" width="24" height="24" class="texto-marca"><use href="#i-demandas" /></svg> Demandas de TI</h1>
+        <p>Registre suas demandas, acompanhe os andamentos e mantenha o histórico de cada atendimento.</p>
+    </div>
+    <div class="cabecalho-pagina__acoes">
+        <a class="btn btn--contorno" asp-action="Quadro">
+            <svg viewBox="0 0 24 24"><use href="#i-quadro" /></svg> Quadro kanban
+        </a>
+        <a class="btn btn--contorno" asp-controller="Relatorios" asp-action="Demandas"
+           asp-all-route-data="@Context.Request.Query.ToDictionary(q => q.Key, q => q.Value.ToString())">
+            <svg viewBox="0 0 24 24"><use href="#i-download" /></svg> Exportar CSV
+        </a>
+        @if (podeOperar)
+        {
+            <a class="btn btn--primario" asp-action="Criar">
+                <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg> Nova demanda
+            </a>
+        }
+    </div>
+</div>
+
+<div class="grade-kpi mb-4">
+    <article class="kpi" style="--kpi-cor:var(--marca-vinho)">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg></span>
+            <span class="kpi__rotulo">Em aberto</span>
+        </div>
+        <div class="kpi__valor" data-contador="@Model.TotalAbertas">0</div>
+        <div class="kpi__nota">aguardando ou em atendimento</div>
+    </article>
+
+    <article class="kpi" style="--kpi-cor:var(--cor-perigo)">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-relogio" /></svg></span>
+            <span class="kpi__rotulo">Fora do prazo</span>
+        </div>
+        <div class="kpi__valor" data-contador="@Model.TotalAtrasadas">0</div>
+        <div class="kpi__nota">
+            @if (Model.TotalAtrasadas > 0)
+            {
+                <a asp-action="Index" asp-route-SomenteAtrasadas="true">ver atrasadas</a>
+            }
+            else
+            {
+                <span class="texto-sucesso">SLA em dia</span>
+            }
+        </div>
+    </article>
+
+    <article class="kpi" style="--kpi-cor:var(--cor-sucesso)">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-check-circulo" /></svg></span>
+            <span class="kpi__rotulo">Concluídas no mês</span>
+        </div>
+        <div class="kpi__valor" data-contador="@Model.TotalConcluidasMes">0</div>
+        <div class="kpi__nota">@DateTime.Now.ToString("MMMM 'de' yyyy")</div>
+    </article>
+</div>
+
+<form method="get" class="cartao painel-filtros" data-filtro-auto>
+    <div class="cartao__corpo cartao__corpo--compacto painel-filtros__topo">
+        <label class="busca">
+            <svg viewBox="0 0 24 24"><use href="#i-busca" /></svg>
+            <input class="entrada" type="search" name="Busca" value="@Model.Filtro.Busca"
+                   placeholder="Buscar por código, título, descrição, etiqueta ou responsável…"
+                   data-busca-instantanea aria-label="Buscar demandas" />
+        </label>
+
+        <select class="entrada" name="Status" style="width:auto"
+                asp-items='ListaDeEnum<StatusDemanda>(Model.Filtro.Status, "Todos os status")'></select>
+
+        <select class="entrada" name="Prioridade" style="width:auto"
+                asp-items='ListaDeEnum<PrioridadeDemanda>(Model.Filtro.Prioridade, "Todas as prioridades")'></select>
+
+        <button type="button" class="btn btn--contorno" data-acao="alternar-filtros" data-alvo="filtros-demanda">
+            <svg viewBox="0 0 24 24"><use href="#i-filtro" /></svg> Mais filtros
+        </button>
+
+        @if (Model.Filtro.PossuiFiltroAtivo)
+        {
+            <a class="btn btn--fantasma" asp-action="Index">Limpar</a>
+        }
+    </div>
+
+    <div class="cartao__corpo cartao__corpo--compacto painel-filtros__corpo" id="filtros-demanda"
+         hidden="@(!Model.Filtro.PossuiFiltroAtivo)">
+        <div class="campo">
+            <label>Categoria</label>
+            <select class="entrada" name="Categoria"
+                    asp-items='ListaDeEnum<CategoriaDemanda>(Model.Filtro.Categoria, "Todas")'></select>
+        </div>
+        <div class="campo">
+            <label>Departamento</label>
+            <select class="entrada" name="DepartamentoId" asp-items="Model.Listas.Departamentos">
+                <option value="">Todos</option>
+            </select>
+        </div>
+        <div class="campo">
+            <label>Solicitante</label>
+            <select class="entrada" name="SolicitanteId" asp-items="Model.Listas.Colaboradores">
+                <option value="">Todos</option>
+            </select>
+        </div>
+        <div class="campo">
+            <label>Responsável</label>
+            <select class="entrada" name="Responsavel" asp-items="Model.Listas.Responsaveis">
+                <option value="">Todos</option>
+            </select>
+        </div>
+        <div class="campo">
+            <label>Ordenação</label>
+            <select class="entrada" name="Ordenacao">
+                <option value="">Mais recentes</option>
+                <option value="prioridade" selected="@(Model.Filtro.Ordenacao == "prioridade")">Prioridade</option>
+                <option value="prazo" selected="@(Model.Filtro.Ordenacao == "prazo")">Prazo (SLA)</option>
+                <option value="status" selected="@(Model.Filtro.Ordenacao == "status")">Status</option>
+                <option value="antigas" selected="@(Model.Filtro.Ordenacao == "antigas")">Mais antigas</option>
+            </select>
+        </div>
+        <div class="campo" style="justify-content:flex-end">
+            <label class="caixa-marcacao">
+                <input type="checkbox" name="SomenteAtrasadas" value="true" checked="@Model.Filtro.SomenteAtrasadas" />
+                <span>Somente atrasadas</span>
+            </label>
+            <label class="caixa-marcacao">
+                <input type="checkbox" name="IncluirEncerradas" value="true" checked="@Model.Filtro.IncluirEncerradas" />
+                <span>Incluir encerradas</span>
+            </label>
+        </div>
+    </div>
+</form>
+
+<section class="cartao">
+    @if (Model.Pagina.TotalItens == 0)
+    {
+        <div class="vazio">
+            <svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg>
+            <h3>Nenhuma demanda encontrada</h3>
+            <p>
+                @(Model.Filtro.PossuiFiltroAtivo
+                    ? "Nenhuma demanda corresponde aos filtros aplicados."
+                    : "Registre a primeira demanda para começar a acompanhar os atendimentos de TI.")
+            </p>
+            @if (podeOperar)
+            {
+                <a class="btn btn--primario btn--pequeno" asp-action="Criar">Nova demanda</a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="tabela-wrapper">
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Demanda</th><th>Categoria</th><th>Solicitante</th><th>Responsável</th>
+                        <th>Prioridade</th><th>Status</th><th>Progresso</th><th class="num">Prazo</th><th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var demanda in Model.Pagina.Itens)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-action="Detalhes" asp-route-id="@demanda.Id">
+                                    <strong class="texto-forte pequeno">@demanda.Titulo</strong>
+                                </a>
+                                <div class="minusculo texto-tenue mono">@demanda.Codigo</div>
+                            </td>
+                            <td class="pequeno texto-suave">@demanda.Categoria.ObterNome()</td>
+                            <td class="pequeno">@(demanda.Solicitante?.NomeCompleto ?? "—")</td>
+                            <td class="pequeno">@(demanda.Responsavel ?? "—")</td>
+                            <td><span class="selo selo--@ClassePrioridade(demanda.Prioridade)">@demanda.Prioridade.ObterNome()</span></td>
+                            <td><span class="selo selo--@ClasseStatusDemanda(demanda.Status)">@demanda.Status.ObterNome()</span></td>
+                            <td style="min-width:110px">
+                                <div class="progresso @(demanda.PercentualConclusao == 100 ? "progresso--sucesso" : "")">
+                                    <div class="progresso__barra" data-barra="@demanda.PercentualConclusao"></div>
+                                </div>
+                                <div class="minusculo texto-tenue mt-1">@demanda.PercentualConclusao%</div>
+                            </td>
+                            <td class="num pequeno">
+                                @if (demanda.PrazoLimite.HasValue)
+                                {
+                                    @if (demanda.Atrasada)
+                                    {
+                                        <span class="selo selo--perigo">@demanda.PrazoLimite.Value.ToString("dd/MM")</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@demanda.PrazoLimite.Value.ToString("dd/MM/yyyy")</span>
+                                        @if (demanda.DiasRestantes is { } dias && dias <= 2)
+                                        {
+                                            <div class="minusculo texto-tenue">@(dias == 0 ? "hoje" : $"em {dias} dia(s)")</div>
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="texto-tenue">—</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="acoes-linha">
+                                    <a class="btn btn--fantasma btn--icone btn--pequeno" title="Detalhes"
+                                       asp-action="Detalhes" asp-route-id="@demanda.Id">
+                                        <svg viewBox="0 0 24 24"><use href="#i-olho" /></svg>
+                                    </a>
+                                    @if (podeOperar)
+                                    {
+                                        <a class="btn btn--fantasma btn--icone btn--pequeno" title="Editar"
+                                           asp-action="Editar" asp-route-id="@demanda.Id">
+                                            <svg viewBox="0 0 24 24"><use href="#i-editar" /></svg>
+                                        </a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="cartao__rodape">
+            <partial name="_Paginacao" model="PaginacaoModel.De(Model.Pagina)" />
+        </div>
+    }
+</section>

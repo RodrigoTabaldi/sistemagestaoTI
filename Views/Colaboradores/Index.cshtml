@@ -1,0 +1,158 @@
+@model ListagemColaboradoresViewModel
+@{
+    ViewData["Titulo"] = "Colaboradores";
+    ViewData["Subtitulo"] = $"{Model.Pagina.TotalItens:N0} pessoa(s) cadastrada(s)";
+    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+}
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1><svg viewBox="0 0 24 24" width="24" height="24" class="texto-marca"><use href="#i-usuarios" /></svg> Colaboradores</h1>
+        <p>Quem pode receber equipamentos em posse e abrir demandas para a equipe de TI.</p>
+    </div>
+    <div class="cabecalho-pagina__acoes">
+        <a class="btn btn--contorno" asp-controller="Relatorios" asp-action="Colaboradores"
+           asp-all-route-data="@Context.Request.Query.ToDictionary(q => q.Key, q => q.Value.ToString())">
+            <svg viewBox="0 0 24 24"><use href="#i-download" /></svg> Exportar CSV
+        </a>
+        @if (podeOperar)
+        {
+            <a class="btn btn--primario" asp-action="Criar">
+                <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg> Novo colaborador
+            </a>
+        }
+    </div>
+</div>
+
+<form method="get" class="cartao painel-filtros" data-filtro-auto>
+    <div class="cartao__corpo cartao__corpo--compacto painel-filtros__topo">
+        <label class="busca">
+            <svg viewBox="0 0 24 24"><use href="#i-busca" /></svg>
+            <input class="entrada" type="search" name="Busca" value="@Model.Filtro.Busca"
+                   placeholder="Buscar por nome, matrícula, e-mail, CPF ou cargo…"
+                   data-busca-instantanea aria-label="Buscar colaboradores" />
+        </label>
+
+        <select class="entrada" name="DepartamentoId" style="width:auto" asp-items="Model.Listas.Departamentos">
+            <option value="">Todos os departamentos</option>
+        </select>
+
+        <select class="entrada" name="Status" style="width:auto"
+                asp-items='ListaDeEnum<StatusColaborador>(Model.Filtro.Status, "Todas as situações")'></select>
+
+        <select class="entrada" name="Ordenacao" style="width:auto" aria-label="Ordenação">
+            <option value="">Nome (A–Z)</option>
+            <option value="matricula" selected="@(Model.Filtro.Ordenacao == "matricula")">Matrícula</option>
+            <option value="departamento" selected="@(Model.Filtro.Ordenacao == "departamento")">Departamento</option>
+            <option value="recentes" selected="@(Model.Filtro.Ordenacao == "recentes")">Cadastros recentes</option>
+        </select>
+
+        <label class="caixa-marcacao">
+            <input type="checkbox" name="ComAtivos" value="true" checked="@Model.Filtro.ComAtivos" />
+            <span>Somente com ativos</span>
+        </label>
+
+        @if (Model.Filtro.PossuiFiltroAtivo)
+        {
+            <a class="btn btn--fantasma" asp-action="Index">Limpar</a>
+        }
+    </div>
+</form>
+
+<section class="cartao">
+    @if (Model.Pagina.TotalItens == 0)
+    {
+        <div class="vazio">
+            <svg viewBox="0 0 24 24"><use href="#i-usuarios" /></svg>
+            <h3>Nenhum colaborador encontrado</h3>
+            <p>Cadastre as pessoas da empresa para poder registrar entregas de equipamentos.</p>
+            @if (podeOperar)
+            {
+                <a class="btn btn--primario btn--pequeno" asp-action="Criar">Cadastrar colaborador</a>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="tabela-wrapper">
+            <table class="tabela">
+                <thead>
+                    <tr>
+                        <th>Colaborador</th><th>Matrícula</th><th>Departamento</th>
+                        <th>Contato</th><th>Situação</th><th class="num">Ativos</th><th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var colaborador in Model.Pagina.Itens)
+                    {
+                        var emPosse = Model.AtivosPorColaborador.GetValueOrDefault(colaborador.Id);
+                        <tr>
+                            <td>
+                                <a class="celula-principal" asp-action="Detalhes" asp-route-id="@colaborador.Id">
+                                    <span class="avatar" style="background:@CorAvatar(colaborador.NomeCompleto)">
+                                        @colaborador.Iniciais
+                                    </span>
+                                    <span class="truncar">
+                                        <strong>@colaborador.NomeCompleto</strong>
+                                        <small>@(colaborador.Cargo ?? "Cargo não informado")</small>
+                                    </span>
+                                </a>
+                            </td>
+                            <td class="mono pequeno">@colaborador.Matricula</td>
+                            <td class="pequeno">@(colaborador.Departamento?.Nome ?? "—")</td>
+                            <td class="pequeno">
+                                <div class="truncar" style="max-width:220px">@colaborador.Email</div>
+                                @if (!string.IsNullOrWhiteSpace(colaborador.Celular))
+                                {
+                                    <div class="minusculo texto-tenue">@colaborador.Celular</div>
+                                }
+                            </td>
+                            <td>
+                                <span class="selo selo--@ClasseStatusColaborador(colaborador.Status)">
+                                    @colaborador.Status.ObterNome()
+                                </span>
+                            </td>
+                            <td class="num">
+                                @if (emPosse > 0)
+                                {
+                                    <span class="selo selo--primario selo--sem-ponto">@emPosse</span>
+                                }
+                                else
+                                {
+                                    <span class="texto-tenue">—</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="acoes-linha">
+                                    <a class="btn btn--fantasma btn--icone btn--pequeno" title="Detalhes"
+                                       asp-action="Detalhes" asp-route-id="@colaborador.Id">
+                                        <svg viewBox="0 0 24 24"><use href="#i-olho" /></svg>
+                                    </a>
+                                    @if (podeOperar)
+                                    {
+                                        <a class="btn btn--fantasma btn--icone btn--pequeno" title="Editar"
+                                           asp-action="Editar" asp-route-id="@colaborador.Id">
+                                            <svg viewBox="0 0 24 24"><use href="#i-editar" /></svg>
+                                        </a>
+                                        @if (colaborador.PodeReceberAtivos)
+                                        {
+                                            <a class="btn btn--fantasma btn--icone btn--pequeno" title="Entregar ativo"
+                                               asp-controller="Movimentacoes" asp-action="Entregar"
+                                               asp-route-colaboradorId="@colaborador.Id">
+                                                <svg viewBox="0 0 24 24"><use href="#i-saida" /></svg>
+                                            </a>
+                                        }
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="cartao__rodape">
+            <partial name="_Paginacao" model="PaginacaoModel.De(Model.Pagina)" />
+        </div>
+    }
+</section>

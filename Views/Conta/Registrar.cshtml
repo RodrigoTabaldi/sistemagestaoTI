@@ -1,0 +1,88 @@
+@model RegistroViewModel
+@{
+    Layout = "_LayoutAutenticacao";
+    ViewData["Titulo"] = "Criar conta";
+    var aprovacaoAutomatica = ViewData["AprovacaoAutomatica"] as bool? ?? false;
+    @* O compilador Razor em runtime não aceita collection expressions ([]) do C# 12. *@
+    var dominios = ViewData["DominiosPermitidos"] as string[] ?? Array.Empty<string>();
+}
+
+<main class="tela-acesso">
+    <div class="tela-acesso__caixa">
+        <header class="tela-acesso__marca">
+            <img class="tela-acesso__logo" src="~/img/logo-elcop.png" alt="ELCOP" />
+            <p class="tela-acesso__assinatura">Gestão de TI</p>
+        </header>
+
+        <h1 class="tela-acesso__titulo">Criar conta</h1>
+        <p class="tela-acesso__apoio">
+            @if (aprovacaoAutomatica)
+            {
+                <text>Você poderá entrar assim que concluir o cadastro.</text>
+            }
+            else
+            {
+                <text>Um administrador precisa liberar o acesso antes do primeiro login.</text>
+            }
+        </p>
+
+        <form asp-action="Registrar" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="alerta alerta--critico mb-3"
+                 role="alert" style="@(ViewData.ModelState.ErrorCount > 0 ? "" : "display:none")">
+                <svg viewBox="0 0 24 24"><use href="#i-alerta" /></svg>
+                <div class="validation-summary-errors crescer"></div>
+            </div>
+
+            <div class="campo mb-3">
+                <label asp-for="NomeCompleto"></label>
+                <input asp-for="NomeCompleto" class="entrada" autocomplete="name"
+                       placeholder="Como consta no crachá" autofocus />
+                <span asp-validation-for="NomeCompleto"></span>
+            </div>
+
+            <div class="campo mb-3">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" class="entrada" type="email" autocomplete="username"
+                       placeholder="seu.nome@@elcop.com.br" />
+                <span asp-validation-for="Email"></span>
+                @if (dominios.Length > 0)
+                {
+                    <span class="ajuda">Aceito apenas: @string.Join(", ", dominios)</span>
+                }
+            </div>
+
+            <div class="campo mb-3">
+                <label asp-for="Cargo"></label>
+                <input asp-for="Cargo" class="entrada" placeholder="Opcional" />
+                <span asp-validation-for="Cargo"></span>
+            </div>
+
+            <div class="campo mb-3">
+                <label asp-for="Senha"></label>
+                <input asp-for="Senha" class="entrada" type="password" autocomplete="new-password"
+                       placeholder="••••••••" />
+                <span asp-validation-for="Senha"></span>
+                <span class="ajuda">Mínimo de 8 caracteres, com maiúscula, minúscula e número.</span>
+            </div>
+
+            <div class="campo mb-4">
+                <label asp-for="ConfirmacaoSenha"></label>
+                <input asp-for="ConfirmacaoSenha" class="entrada" type="password" autocomplete="new-password"
+                       placeholder="••••••••" />
+                <span asp-validation-for="ConfirmacaoSenha"></span>
+            </div>
+
+            <button type="submit" class="btn btn--primario btn--bloco">
+                <svg viewBox="0 0 24 24"><use href="#i-check" /></svg> Criar conta
+            </button>
+        </form>
+
+        <p class="tela-acesso__rodape">
+            Já tem acesso? <a asp-action="Entrar">Entrar</a>
+        </p>
+    </div>
+</main>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

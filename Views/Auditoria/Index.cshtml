@@ -1,0 +1,97 @@
+@model AuditoriaViewModel
+@{
+    ViewData["Titulo"] = "Auditoria";
+    ViewData["Subtitulo"] = $"{Model.Pagina.TotalItens:N0} registro(s)";
+
+    string ClasseAcao(TipoAcaoAuditoria acao) => acao switch
+    {
+        TipoAcaoAuditoria.Criacao => "sucesso",
+        TipoAcaoAuditoria.Alteracao => "info",
+        TipoAcaoAuditoria.Exclusao => "perigo",
+        TipoAcaoAuditoria.Movimentacao => "primario",
+        TipoAcaoAuditoria.Login => "neutro",
+        _ => "neutro"
+    };
+}
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1><svg viewBox="0 0 24 24" width="24" height="24" class="texto-marca"><use href="#i-auditoria" /></svg> Trilha de auditoria</h1>
+        <p>Todas as operações relevantes do sistema, com autor, data e origem.</p>
+    </div>
+</div>
+
+<form method="get" class="cartao painel-filtros" data-filtro-auto>
+    <div class="cartao__corpo cartao__corpo--compacto painel-filtros__topo">
+        <label class="busca">
+            <svg viewBox="0 0 24 24"><use href="#i-busca" /></svg>
+            <input class="entrada" type="search" name="busca" value="@Model.Busca"
+                   placeholder="Buscar por descrição, usuário ou entidade…"
+                   data-busca-instantanea aria-label="Buscar registros" />
+        </label>
+
+        <select class="entrada" name="acao" style="width:auto"
+                asp-items='ListaDeEnum<TipoAcaoAuditoria>(Model.Acao, "Todas as ações")'></select>
+
+        <input class="entrada" type="date" name="de" style="width:auto" value="@Model.De?.ToString("yyyy-MM-dd")"
+               aria-label="Data inicial" />
+        <input class="entrada" type="date" name="ate" style="width:auto" value="@Model.Ate?.ToString("yyyy-MM-dd")"
+               aria-label="Data final" />
+
+        <a class="btn btn--fantasma" asp-action="Index">Limpar</a>
+    </div>
+</form>
+
+<section class="cartao">
+    @if (Model.Pagina.TotalItens == 0)
+    {
+        <div class="vazio">
+            <svg viewBox="0 0 24 24"><use href="#i-auditoria" /></svg>
+            <h3>Nenhum registro encontrado</h3>
+            <p>Ajuste os filtros ou aguarde novas operações no sistema.</p>
+        </div>
+    }
+    else
+    {
+        <div class="tabela-wrapper">
+            <table class="tabela">
+                <thead>
+                    <tr><th>Data / hora</th><th>Usuário</th><th>Ação</th><th>Entidade</th><th>Descrição</th><th>Origem</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var registro in Model.Pagina.Itens)
+                    {
+                        <tr>
+                            <td class="pequeno">
+                                @registro.DataHora.ToString("dd/MM/yyyy")
+                                <div class="minusculo texto-tenue">@registro.DataHora.ToString("HH:mm:ss")</div>
+                            </td>
+                            <td class="pequeno">
+                                <div class="celula-principal">
+                                    <span class="avatar avatar--pequeno" style="background:@CorAvatar(registro.Usuario)">
+                                        @registro.Usuario[..1].ToUpperInvariant()
+                                    </span>
+                                    <span class="truncar">@registro.Usuario</span>
+                                </div>
+                            </td>
+                            <td><span class="selo selo--@ClasseAcao(registro.Acao)">@registro.Acao.ObterNome()</span></td>
+                            <td class="pequeno texto-suave">
+                                @registro.Entidade
+                                @if (registro.EntidadeId.HasValue)
+                                {
+                                    <span class="mono minusculo">#@registro.EntidadeId</span>
+                                }
+                            </td>
+                            <td class="pequeno">@registro.Descricao</td>
+                            <td class="minusculo texto-tenue mono">@(registro.EnderecoIp ?? "—")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="cartao__rodape">
+            <partial name="_Paginacao" model="PaginacaoModel.De(Model.Pagina)" />
+        </div>
+    }
+</section>

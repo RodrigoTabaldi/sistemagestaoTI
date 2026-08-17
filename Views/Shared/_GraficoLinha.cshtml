@@ -1,0 +1,71 @@
+@model GraficoLinhaModel
+@using System.Globalization
+@*
+    Gráfico de linhas em SVG com viewBox fixo: o desenho é feito em coordenadas
+    de 0–600 x 0–190 e o CSS estica para a largura disponível.
+*@
+@{
+    const double largura = 600, altura = 190, margemBaixo = 26, margemTopo = 12;
+    var pontosPorSerie = Model.Rotulos.Count;
+
+    if (pontosPorSerie == 0)
+    {
+        <p class="texto-tenue pequeno" style="margin:0">Sem dados no período.</p>
+        return;
+    }
+
+    var passo = pontosPorSerie == 1 ? 0 : largura / (pontosPorSerie - 1);
+    var alturaUtil = altura - margemBaixo - margemTopo;
+    var maximo = (double)Model.Maximo;
+
+    double X(int indice) => pontosPorSerie == 1 ? largura / 2 : indice * passo;
+    double Y(decimal valor) => margemTopo + alturaUtil - ((double)valor / maximo * alturaUtil);
+    string N(double v) => v.ToString("0.##", CultureInfo.InvariantCulture);
+}
+
+<svg class="grafico-linha" viewBox="0 0 @N(largura) @N(altura)" preserveAspectRatio="none" role="img"
+     aria-label="Evolução mensal">
+    @* Linhas-guia horizontais *@
+    @for (var i = 0; i <= 3; i++)
+    {
+        var y = margemTopo + (alturaUtil / 3 * i);
+        <line x1="0" y1="@N(y)" x2="@N(largura)" y2="@N(y)" stroke="var(--borda)" stroke-width="1" stroke-dasharray="3 4" />
+    }
+
+    @foreach (var serie in Model.Series)
+    {
+        var coordenadas = serie.Pontos.Select((p, i) => (X: X(i), Y: Y(p.Valor))).ToList();
+        var traco = string.Join(" ", coordenadas.Select((c, i) => $"{(i == 0 ? "M" : "L")}{N(c.X)},{N(c.Y)}"));
+        var area = $"{traco} L{N(coordenadas[^1].X)},{N(altura - margemBaixo)} L{N(coordenadas[0].X)},{N(altura - margemBaixo)} Z";
+
+        <path class="area" d="@area" fill="@serie.Cor" />
+        <path class="traco" d="@traco" stroke="@serie.Cor" />
+
+        @for (var i = 0; i < coordenadas.Count; i++)
+        {
+            <circle class="ponto" cx="@N(coordenadas[i].X)" cy="@N(coordenadas[i].Y)" r="4"
+                    fill="var(--fundo-superficie)" stroke="@serie.Cor" stroke-width="2.5">
+                <title>@serie.Nome · @serie.Pontos[i].Rotulo: @serie.Pontos[i].Valor.ToString("N0")</title>
+            </circle>
+        }
+    }
+
+    @* <text> é palavra reservada do Razor: o rótulo do eixo é emitido como marcação crua. *@
+    @for (var i = 0; i < Model.Rotulos.Count; i++)
+    {
+        var ancora = i == 0 ? "start" : i == Model.Rotulos.Count - 1 ? "end" : "middle";
+        var rotulo = System.Net.WebUtility.HtmlEncode(Model.Rotulos[i]);
+
+        @Html.Raw($"<text class=\"rotulo-eixo\" x=\"{N(X(i))}\" y=\"{N(altura - 6)}\" text-anchor=\"{ancora}\">{rotulo}</text>")
+    }
+</svg>
+
+<div class="linha g-4 envolve mt-2">
+    @foreach (var serie in Model.Series)
+    {
+        <span class="linha g-2 pequeno texto-suave">
+            <i style="width:12px;height:3px;border-radius:2px;background:@serie.Cor;display:inline-block"></i>
+            @serie.Nome
+        </span>
+    }
+</div>

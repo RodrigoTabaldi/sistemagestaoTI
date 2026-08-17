@@ -1,0 +1,380 @@
+@model PainelModel
+@{
+    ViewData["Titulo"] = "Painel";
+    ViewData["Subtitulo"] = $"Visão consolidada · {DateTime.Now:dddd, dd \\d\\e MMMM \\d\\e yyyy}";
+
+    var iconeAlerta = new Dictionary<string, string>
+    {
+        ["alerta"] = "i-alerta", ["relogio"] = "i-relogio", ["raio"] = "i-raio",
+        ["escudo"] = "i-escudo", ["ferramenta"] = "i-ferramenta", ["caixa"] = "i-caixa"
+    };
+
+    var serieMensal = new GraficoLinhaModel
+    {
+        Series = new[]
+        {
+            new SerieLinha { Nome = "Movimentações", Cor = "#8B1F26", Pontos = Model.MovimentacoesPorMes },
+            new SerieLinha { Nome = "Demandas abertas", Cor = "#3F6FB5", Pontos = Model.DemandasPorMes }
+        }
+    };
+}
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>Painel de controle</h1>
+        <p>Situação atual do parque de TI, das movimentações e das demandas da equipe.</p>
+    </div>
+    <div class="cabecalho-pagina__acoes">
+        <a class="btn btn--contorno" asp-controller="Relatorios" asp-action="Index">
+            <svg viewBox="0 0 24 24"><use href="#i-grafico" /></svg> Relatórios
+        </a>
+        <a class="btn btn--primario" asp-controller="Movimentacoes" asp-action="Entregar">
+            <svg viewBox="0 0 24 24"><use href="#i-saida" /></svg> Registrar entrega
+        </a>
+    </div>
+</div>
+
+@* ---------------------------------------------------------------- Alertas *@
+@if (Model.Alertas.Count > 0)
+{
+    <div class="grade-3 mb-4">
+        @foreach (var (alerta, indice) in Model.Alertas.Select((a, i) => (a, i)))
+        {
+            var classe = alerta.Severidade switch
+            {
+                "critico" => "alerta--critico",
+                "atencao" => "alerta--atencao",
+                _ => "alerta--info"
+            };
+
+            <a class="alerta @classe animar-entrada" style="--atraso:@(indice * 60)ms" href="@alerta.Url">
+                <svg viewBox="0 0 24 24"><use href="#@iconeAlerta.GetValueOrDefault(alerta.Icone, "i-info")" /></svg>
+                <div>
+                    <strong>@alerta.Titulo</strong>
+                    <div class="pequeno texto-suave">@alerta.Descricao</div>
+                </div>
+            </a>
+        }
+    </div>
+}
+
+@* ---------------------------------------------------------------- KPIs *@
+<div class="grade-kpi mb-4">
+    <article class="kpi animar-entrada" style="--kpi-cor:var(--marca-vinho)">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-caixa" /></svg></span>
+            <span class="kpi__rotulo">Ativos cadastrados</span>
+        </div>
+        <div class="kpi__valor" data-contador="@Model.TotalAtivos">0</div>
+        <div class="kpi__nota">
+            <strong>@Model.TaxaUtilizacao.ToString("0.#")%</strong> do parque está em uso
+        </div>
+    </article>
+
+    <article class="kpi animar-entrada" style="--kpi-cor:var(--cor-sucesso);--atraso:60ms">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-check-circulo" /></svg></span>
+            <span class="kpi__rotulo">Disponíveis em estoque</span>
+        </div>
+        <div class="kpi__valor" data-contador="@Model.AtivosDisponiveis">0</div>
+        <div class="kpi__nota">
+            @Model.AtivosEmManutencao em manutenção · @Model.AtivosBaixados baixado(s)
+        </div>
+    </article>
+
+    <article class="kpi animar-entrada" style="--kpi-cor:var(--cor-info);--atraso:120ms">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-troca" /></svg></span>
+            <span class="kpi__rotulo">Ativos em posse</span>
+        </div>
+        <div class="kpi__valor" data-contador="@Model.MovimentacoesEmAberto">0</div>
+        <div class="kpi__nota">
+            com @Model.ColaboradoresComAtivos de @Model.TotalColaboradores colaborador(es)
+        </div>
+    </article>
+
+    <article class="kpi animar-entrada" style="--kpi-cor:var(--cor-atencao);--atraso:180ms">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg></span>
+            <span class="kpi__rotulo">Demandas em aberto</span>
+        </div>
+        <div class="kpi__valor" data-contador="@(Model.DemandasAbertas + Model.DemandasEmAndamento)">0</div>
+        <div class="kpi__nota">
+            @if (Model.DemandasAtrasadas > 0)
+            {
+                <span class="texto-perigo negrito">@Model.DemandasAtrasadas fora do prazo</span>
+            }
+            else
+            {
+                <span class="texto-sucesso">nenhuma fora do prazo</span>
+            }
+        </div>
+    </article>
+
+    <article class="kpi animar-entrada" style="--kpi-cor:var(--cor-roxo);--atraso:240ms">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-dinheiro" /></svg></span>
+            <span class="kpi__rotulo">Valor do inventário</span>
+        </div>
+        <div class="kpi__valor" data-contador="@Model.ValorInventario.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+             data-contador-prefixo="R$ " data-contador-decimais="2">R$ 0,00</div>
+        <div class="kpi__nota">soma dos valores de aquisição</div>
+    </article>
+
+    <article class="kpi animar-entrada" style="--kpi-cor:var(--cor-aviso);--atraso:300ms">
+        <div class="kpi__topo">
+            <span class="kpi__icone"><svg viewBox="0 0 24 24"><use href="#i-relogio" /></svg></span>
+            <span class="kpi__rotulo">Tempo médio de atendimento</span>
+        </div>
+        <div class="kpi__valor" data-contador="@Model.TempoMedioAtendimentoHoras.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+             data-contador-decimais="1" data-contador-sufixo="h">0h</div>
+        <div class="kpi__nota">@Model.DemandasConcluidasNoMes demanda(s) concluída(s) no mês</div>
+    </article>
+</div>
+
+@* ---------------------------------------------------------------- Gráficos *@
+<div class="grade-painel mb-4">
+    <section class="cartao">
+        <div class="cartao__cabecalho">
+            <h2>Evolução dos últimos 6 meses</h2>
+            <div class="acoes">
+                <span class="chip">movimentações × demandas</span>
+            </div>
+        </div>
+        <div class="cartao__corpo">
+            <partial name="_GraficoLinha" model="serieMensal" />
+        </div>
+    </section>
+
+    <section class="cartao">
+        <div class="cartao__cabecalho"><h2>Ativos por situação</h2></div>
+        <div class="cartao__corpo">
+            <partial name="_GraficoRosca" model="Model.AtivosPorStatus" />
+        </div>
+    </section>
+</div>
+
+<div class="grade-2 mb-4">
+    <section class="cartao">
+        <div class="cartao__cabecalho">
+            <h2>Ativos por tipo</h2>
+            <div class="acoes">
+                <a class="btn btn--fantasma btn--pequeno" asp-controller="Ativos" asp-action="Index">
+                    Ver inventário <svg viewBox="0 0 24 24"><use href="#i-seta-direita" /></svg>
+                </a>
+            </div>
+        </div>
+        <div class="cartao__corpo">
+            <partial name="_GraficoBarras" model="Model.AtivosPorTipo" />
+        </div>
+    </section>
+
+    <section class="cartao">
+        <div class="cartao__cabecalho"><h2>Demandas por prioridade</h2></div>
+        <div class="cartao__corpo">
+            @if (Model.DemandasPorPrioridade.Count == 0)
+            {
+                <p class="texto-tenue pequeno" style="margin:0">Nenhuma demanda em aberto.</p>
+            }
+            else
+            {
+                <partial name="_GraficoBarras" model="Model.DemandasPorPrioridade" />
+            }
+
+            @if (Model.AtivosPorDepartamento.Count > 0)
+            {
+                <h3 class="mt-4 mb-2" style="font-size:.86rem">Ativos por departamento</h3>
+                <partial name="_GraficoBarras" model="Model.AtivosPorDepartamento" />
+            }
+        </div>
+    </section>
+</div>
+
+@* ---------------------------------------------------------------- Listas *@
+<div class="grade-2">
+    <section class="cartao">
+        <div class="cartao__cabecalho">
+            <h2>Movimentações recentes</h2>
+            <div class="acoes">
+                <a class="btn btn--fantasma btn--pequeno" asp-controller="Movimentacoes" asp-action="Index">
+                    Ver todas <svg viewBox="0 0 24 24"><use href="#i-seta-direita" /></svg>
+                </a>
+            </div>
+        </div>
+
+        @if (Model.UltimasMovimentacoes.Count == 0)
+        {
+            <div class="vazio">
+                <svg viewBox="0 0 24 24"><use href="#i-troca" /></svg>
+                <h3>Nenhuma movimentação</h3>
+                <p>Registre a primeira entrega de equipamento para iniciar o histórico.</p>
+                <a class="btn btn--primario btn--pequeno" asp-controller="Movimentacoes" asp-action="Entregar">
+                    Registrar entrega
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="tabela-wrapper">
+                <table class="tabela">
+                    <tbody>
+                        @foreach (var movimentacao in Model.UltimasMovimentacoes)
+                        {
+                            <tr>
+                                <td>
+                                    <a class="celula-principal" asp-controller="Movimentacoes"
+                                       asp-action="Detalhes" asp-route-id="@movimentacao.Id">
+                                        <span class="icone-tipo">
+                                            <svg viewBox="0 0 24 24">
+                                                <use href="#@("i-" + IconeTipoAtivo(movimentacao.Ativo?.Tipo ?? TipoAtivo.Outro))" />
+                                            </svg>
+                                        </span>
+                                        <span class="truncar">
+                                            <strong>@movimentacao.Ativo?.DescricaoCurta</strong>
+                                            <small>@movimentacao.Ativo?.Patrimonio · @movimentacao.Colaborador?.NomeCompleto</small>
+                                        </span>
+                                    </a>
+                                </td>
+                                <td class="num">
+                                    <span class="selo selo--@ClasseStatusMovimentacao(movimentacao.Status)">
+                                        @movimentacao.Status.ObterNome()
+                                    </span>
+                                    <div class="minusculo texto-tenue mt-1">@TempoRelativo(movimentacao.DataRetirada)</div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <section class="cartao">
+        <div class="cartao__cabecalho">
+            <h2>Demandas prioritárias</h2>
+            <div class="acoes">
+                <a class="btn btn--fantasma btn--pequeno" asp-controller="Demandas" asp-action="Quadro">
+                    Abrir quadro <svg viewBox="0 0 24 24"><use href="#i-seta-direita" /></svg>
+                </a>
+            </div>
+        </div>
+
+        @if (Model.DemandasPrioritarias.Count == 0)
+        {
+            <div class="vazio">
+                <svg viewBox="0 0 24 24"><use href="#i-check-circulo" /></svg>
+                <h3>Nada pendente</h3>
+                <p>Todas as demandas registradas já foram encerradas.</p>
+                <a class="btn btn--primario btn--pequeno" asp-controller="Demandas" asp-action="Criar">
+                    Nova demanda
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="pilha">
+                @foreach (var demanda in Model.DemandasPrioritarias)
+                {
+                    <a class="cartao__corpo cartao__corpo--compacto linha g-3"
+                       style="border-bottom:1px solid var(--borda)"
+                       asp-controller="Demandas" asp-action="Detalhes" asp-route-id="@demanda.Id">
+                        <span class="selo selo--@ClassePrioridade(demanda.Prioridade)">@demanda.Prioridade.ObterNome()</span>
+                        <span class="crescer truncar">
+                            <strong class="texto-forte pequeno">@demanda.Titulo</strong>
+                            <div class="minusculo texto-suave">
+                                @demanda.Codigo · @demanda.Categoria.ObterNome()
+                                @if (demanda.Solicitante is not null)
+                                {
+                                    <text> · @demanda.Solicitante.PrimeiroNome</text>
+                                }
+                            </div>
+                        </span>
+                        @if (demanda.Atrasada)
+                        {
+                            <span class="selo selo--perigo">atrasada</span>
+                        }
+                        else if (demanda.PrazoLimite.HasValue)
+                        {
+                            <span class="minusculo texto-tenue">@demanda.PrazoLimite.Value.ToString("dd/MM")</span>
+                        }
+                    </a>
+                }
+            </div>
+        }
+    </section>
+</div>
+
+@if (Model.DevolucoesPendentes.Count > 0 || Model.GarantiasVencendo.Count > 0)
+{
+    <div class="grade-2 mt-4">
+        @if (Model.DevolucoesPendentes.Count > 0)
+        {
+            <section class="cartao">
+                <div class="cartao__cabecalho"><h2>Próximas devoluções</h2></div>
+                <div class="tabela-wrapper">
+                    <table class="tabela">
+                        <thead>
+                            <tr><th>Equipamento</th><th>Colaborador</th><th class="num">Previsão</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var movimentacao in Model.DevolucoesPendentes)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong class="pequeno">@movimentacao.Ativo?.DescricaoCurta</strong>
+                                        <div class="minusculo texto-tenue mono">@movimentacao.Ativo?.Patrimonio</div>
+                                    </td>
+                                    <td class="pequeno">@movimentacao.Colaborador?.NomeCompleto</td>
+                                    <td class="num">
+                                        @if (movimentacao.EstaAtrasada)
+                                        {
+                                            <span class="selo selo--perigo">@movimentacao.DiasDeAtraso d atraso</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="pequeno">@movimentacao.DataPrevistaDevolucao?.ToString("dd/MM/yyyy")</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
+
+        @if (Model.GarantiasVencendo.Count > 0)
+        {
+            <section class="cartao">
+                <div class="cartao__cabecalho">
+                    <h2>Garantias vencendo</h2>
+                    <div class="acoes"><span class="chip">próximos 60 dias</span></div>
+                </div>
+                <div class="tabela-wrapper">
+                    <table class="tabela">
+                        <thead>
+                            <tr><th>Ativo</th><th>Patrimônio</th><th class="num">Garantia até</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var ativo in Model.GarantiasVencendo)
+                            {
+                                <tr>
+                                    <td>
+                                        <a asp-controller="Ativos" asp-action="Detalhes" asp-route-id="@ativo.Id">
+                                            <strong class="pequeno">@ativo.DescricaoCurta</strong>
+                                        </a>
+                                        <div class="minusculo texto-tenue">@ativo.Tipo.ObterNome()</div>
+                                    </td>
+                                    <td class="mono pequeno">@ativo.Patrimonio</td>
+                                    <td class="num">
+                                        <span class="selo selo--aviso">@ativo.GarantiaAte?.ToString("dd/MM/yyyy")</span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        }
+    </div>
+}

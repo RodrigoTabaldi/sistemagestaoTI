@@ -1,0 +1,74 @@
+@model PaginacaoModel
+@*
+    Paginação que preserva os filtros da query string, trocando apenas "Pagina".
+*@
+@{
+    if (Model.TotalPaginas <= 0) { return; }
+
+    var consulta = new Dictionary<string, string?>();
+    foreach (var par in ViewContext.HttpContext.Request.Query)
+    {
+        if (!string.Equals(par.Key, "Pagina", StringComparison.OrdinalIgnoreCase))
+            consulta[par.Key] = par.Value.ToString();
+    }
+
+    string Url(int pagina)
+    {
+        var parametros = new Dictionary<string, string?>(consulta) { ["Pagina"] = pagina.ToString() };
+        var query = string.Join("&", parametros
+            .Where(p => !string.IsNullOrEmpty(p.Value))
+            .Select(p => $"{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value!)}"));
+
+        return $"{ViewContext.HttpContext.Request.Path}?{query}";
+    }
+
+    // Janela deslizante de no máximo 7 páginas ao redor da atual.
+    var inicio = Math.Max(1, Model.PaginaAtual - 3);
+    var fim = Math.Min(Model.TotalPaginas, inicio + 6);
+    inicio = Math.Max(1, fim - 6);
+}
+
+<nav class="paginacao" aria-label="Paginação">
+    <span class="paginacao__info">
+        Exibindo <strong>@Model.PrimeiroRegistro</strong>–<strong>@Model.UltimoRegistro</strong>
+        de <strong>@Model.TotalItens.ToString("N0")</strong> registro(s)
+    </span>
+
+    @if (Model.TemAnterior)
+    {
+        <a href="@Url(Model.PaginaAtual - 1)" aria-label="Página anterior">
+            <svg viewBox="0 0 24 24" width="15" height="15"><use href="#i-seta-esquerda" /></svg>
+        </a>
+    }
+
+    @if (inicio > 1)
+    {
+        <a href="@Url(1)">1</a>
+        @if (inicio > 2) { <span class="reticencias">…</span> }
+    }
+
+    @for (var i = inicio; i <= fim; i++)
+    {
+        if (i == Model.PaginaAtual)
+        {
+            <span class="atual" aria-current="page">@i</span>
+        }
+        else
+        {
+            <a href="@Url(i)">@i</a>
+        }
+    }
+
+    @if (fim < Model.TotalPaginas)
+    {
+        @if (fim < Model.TotalPaginas - 1) { <span class="reticencias">…</span> }
+        <a href="@Url(Model.TotalPaginas)">@Model.TotalPaginas</a>
+    }
+
+    @if (Model.TemProxima)
+    {
+        <a href="@Url(Model.PaginaAtual + 1)" aria-label="Próxima página">
+            <svg viewBox="0 0 24 24" width="15" height="15"><use href="#i-seta-direita" /></svg>
+        </a>
+    }
+</nav>

@@ -1,0 +1,192 @@
+@*
+    Sprite SVG único: os ícones são referenciados por <use href="#i-nome"/>.
+    Traço herda currentColor, então cada ícone acompanha a cor do contexto.
+*@
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+        <g id="i-painel" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" />
+            <rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" />
+        </g>
+        <g id="i-caixa" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 8l-9-5-9 5v8l9 5 9-5V8z" /><path d="M3.3 7.5L12 12.5l8.7-5" /><path d="M12 12.5V21" />
+        </g>
+        <g id="i-notebook" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="5" width="16" height="10" rx="1.6" /><path d="M2 19h20" />
+        </g>
+        <g id="i-desktop" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="12" rx="1.8" /><path d="M9 20h6M12 16v4" />
+        </g>
+        <g id="i-monitor" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2.5" y="4" width="19" height="12.5" rx="1.8" /><path d="M8.5 20.5h7M12 16.5v4" />
+        </g>
+        <g id="i-celular" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="7" y="2" width="10" height="20" rx="2.4" /><path d="M11 18.5h2" />
+        </g>
+        <g id="i-tablet" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="2.5" width="14" height="19" rx="2.2" /><path d="M11 18.5h2" />
+        </g>
+        <g id="i-bodycam" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2.5" y="7" width="14" height="10" rx="2" /><path d="M16.5 11l5-3v8l-5-3z" /><circle cx="8" cy="12" r="2.4" />
+        </g>
+        <g id="i-impressora" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9V3h12v6" /><rect x="3" y="9" width="18" height="8" rx="1.8" /><path d="M6 14h12v7H6z" />
+        </g>
+        <g id="i-servidor" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="7" rx="1.6" /><rect x="3" y="14" width="18" height="7" rx="1.6" />
+            <path d="M7 6.5h.01M7 17.5h.01" />
+        </g>
+        <g id="i-rede" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="8.5" y="2.5" width="7" height="6" rx="1.4" /><rect x="1.5" y="15.5" width="7" height="6" rx="1.4" />
+            <rect x="15.5" y="15.5" width="7" height="6" rx="1.4" /><path d="M12 8.5v4M5 15.5v-3h14v3" />
+        </g>
+        <g id="i-energia" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12L13 2z" />
+        </g>
+        <g id="i-headset" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 14v-2a8 8 0 0116 0v2" /><rect x="2" y="13.5" width="4.5" height="7" rx="1.6" />
+            <rect x="17.5" y="13.5" width="4.5" height="7" rx="1.6" />
+        </g>
+        <g id="i-camera" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2.5 6.5l16-3 2 6-16 3z" /><path d="M6 9.5V16a2 2 0 002 2h3" /><circle cx="14" cy="18" r="3" />
+        </g>
+        <g id="i-radio" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="8" width="12" height="14" rx="2" /><path d="M12 8V4M9 4h6M9.5 12h5M9.5 15.5h5" />
+        </g>
+        <g id="i-chip" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="4" width="16" height="16" rx="2.4" /><rect x="9" y="9" width="6" height="6" rx="1" />
+            <path d="M9 1.5v2.5M15 1.5v2.5M9 20v2.5M15 20v2.5M1.5 9H4M1.5 15H4M20 9h2.5M20 15h2.5" />
+        </g>
+        <g id="i-licenca" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6.5A2 2 0 004.5 4v16a2 2 0 002 2h11a2 2 0 002-2V8l-6-6z" /><path d="M14 2v6h6M8.5 13h7M8.5 17h5" />
+        </g>
+        <g id="i-usuarios" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 20v-1.5a4 4 0 00-4-4H6a4 4 0 00-4 4V20" /><circle cx="9" cy="7" r="3.6" />
+            <path d="M22 20v-1.5a4 4 0 00-3-3.87M16.5 3.6a4 4 0 010 7" />
+        </g>
+        <g id="i-usuario" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19.5 21v-2a4 4 0 00-4-4h-7a4 4 0 00-4 4v2" /><circle cx="12" cy="7.5" r="4" />
+        </g>
+        <g id="i-troca" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 3l4 4-4 4" /><path d="M20 7H4" /><path d="M8 21l-4-4 4-4" /><path d="M4 17h16" />
+        </g>
+        <g id="i-entrada" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4" /><path d="M10 17l5-5-5-5" /><path d="M15 12H3" />
+        </g>
+        <g id="i-saida" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" />
+        </g>
+        <g id="i-demandas" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3.5" y="4" width="17" height="17" rx="2.2" /><path d="M8 2.5v3M16 2.5v3M3.5 9.5h17" />
+            <path d="M8 13.5l2.2 2.2 4-4" />
+        </g>
+        <g id="i-quadro" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2.5" y="3.5" width="5.5" height="17" rx="1.6" /><rect x="9.25" y="3.5" width="5.5" height="12" rx="1.6" />
+            <rect x="16" y="3.5" width="5.5" height="15" rx="1.6" />
+        </g>
+        <g id="i-relatorio" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" /><path d="M14 2v6h6" />
+            <path d="M8 17v-3M12 17v-6M16 17v-2" />
+        </g>
+        <g id="i-config" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3.2" />
+            <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 008 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z" />
+        </g>
+        <g id="i-escudo" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" />
+        </g>
+        <g id="i-auditoria" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7.5" /><path d="M20.5 20.5l-4.2-4.2M11 7.5V11l2.2 2.2" />
+        </g>
+        <g id="i-busca" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7.5" /><path d="M20.5 20.5l-4.3-4.3" />
+        </g>
+        <g id="i-filtro" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 5h18l-7 8.2V20l-4 2v-8.8L3 5z" />
+        </g>
+        <g id="i-mais" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14" /></g>
+        <g id="i-editar" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.4 2.6a2.1 2.1 0 013 3L12 15l-4 1 1-4 9.4-9.4z" />
+        </g>
+        <g id="i-lixeira" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" /><path d="M10 11v6M14 11v6" />
+        </g>
+        <g id="i-olho" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12z" /><circle cx="12" cy="12" r="3.2" />
+        </g>
+        <g id="i-alerta" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L14.7 3.9a2 2 0 00-3.4 0z" /><path d="M12 9v4.5M12 17.5h.01" />
+        </g>
+        <g id="i-relogio" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9.5" /><path d="M12 6.5V12l3.6 2.2" />
+        </g>
+        <g id="i-check" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6L9 17l-5-5" />
+        </g>
+        <g id="i-check-circulo" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9.5" /><path d="M8 12.2l2.7 2.7L16 9.5" />
+        </g>
+        <g id="i-x" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12" /></g>
+        <g id="i-raio" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M13 2L4.5 13.5H11L10 22l8.5-11.5H12L13 2z" />
+        </g>
+        <g id="i-ferramenta" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.7 6.3a4.5 4.5 0 006 5.9l-9.4 9.4a2.1 2.1 0 01-3-3l9.4-9.4a4.5 4.5 0 00-5.9-6L8.5 6.5l3.3 3.3" />
+        </g>
+        <g id="i-download" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><path d="M7 10l5 5 5-5M12 15V3" />
+        </g>
+        <g id="i-upload" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><path d="M17 8l-5-5-5 5M12 3v12" />
+        </g>
+        <g id="i-imagem" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.6" />
+            <path d="M21 15l-5-5L5 21" />
+        </g>
+        <g id="i-impressao" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9V3h12v6" /><path d="M6 18H4a2 2 0 01-2-2v-4a2 2 0 012-2h16a2 2 0 012 2v4a2 2 0 01-2 2h-2" /><rect x="6" y="14" width="12" height="8" rx="1" />
+        </g>
+        <g id="i-menu" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18" /></g>
+        <g id="i-recolher" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" /><path d="M9 3v18" />
+        </g>
+        <g id="i-sol" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4.2" /><path d="M12 1.5v2.5M12 20v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M1.5 12H4M20 12h2.5M4.2 19.8L6 18M18 6l1.8-1.8" />
+        </g>
+        <g id="i-lua" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z" />
+        </g>
+        <g id="i-sair" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" /><path d="M16 17l5-5-5-5M21 12H9" />
+        </g>
+        <g id="i-seta-direita" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+        </g>
+        <g id="i-seta-esquerda" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M11 18l-6-6 6-6" />
+        </g>
+        <g id="i-local" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z" /><circle cx="12" cy="10" r="2.8" />
+        </g>
+        <g id="i-predio" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3.5" y="2.5" width="10" height="19" rx="1.4" /><path d="M13.5 9h5.5a1.5 1.5 0 011.5 1.5v11" />
+            <path d="M6.5 6h4M6.5 10h4M6.5 14h4M16.5 13h1M16.5 17h1M2 21.5h20" />
+        </g>
+        <g id="i-etiqueta" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.6 13.4l-7.2 7.2a2 2 0 01-2.8 0l-7.2-7.2a2 2 0 01-.6-1.4V4a2 2 0 012-2h8a2 2 0 011.4.6l6.4 6.4a2 2 0 010 2.8z" />
+            <circle cx="7.5" cy="7.5" r="1.4" />
+        </g>
+        <g id="i-calendario" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3.5" y="4.5" width="17" height="17" rx="2.2" /><path d="M8 2.5v4M16 2.5v4M3.5 10h17" />
+        </g>
+        <g id="i-info" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9.5" /><path d="M12 16.5V11M12 7.6h.01" />
+        </g>
+        <g id="i-dinheiro" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5.5" width="20" height="13" rx="2" /><circle cx="12" cy="12" r="2.8" /><path d="M6 12h.01M18 12h.01" />
+        </g>
+        <g id="i-grafico" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3v18h18" /><path d="M7 15l4-5 3.5 3L21 6" />
+        </g>
+    </defs>
+</svg>
