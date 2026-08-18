@@ -5,4 +5,7 @@
     <Project Path="src/Elcop.TI.Infrastructure/Elcop.TI.Infrastructure.csproj" />
     <Project Path="src/Elcop.TI.Web/Elcop.TI.Web.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Elcop.TI.Application.Tests/Elcop.TI.Application.Tests.csproj" />
+  </Folder>
 </Solution>

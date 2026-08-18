@@ -55,4 +55,30 @@ public static class RegrasDeUpload
 
         return null;
     }
+
+    /// <summary>
+    /// Confere a assinatura binária (magic bytes) do conteúdo contra a extensão declarada —
+    /// a extensão do nome do arquivo é só o que o navegador informou, nunca dado confiável.
+    /// </summary>
+    public static bool AssinaturaCorresponde(ReadOnlySpan<byte> cabecalho, string extensao) =>
+        extensao.ToLowerInvariant() switch
+        {
+            ".jpg" or ".jpeg" =>
+                cabecalho.Length >= 3
+                && cabecalho[0] == 0xFF && cabecalho[1] == 0xD8 && cabecalho[2] == 0xFF,
+
+            ".png" =>
+                cabecalho.Length >= 8
+                && cabecalho[0] == 0x89 && cabecalho[1] == 0x50 && cabecalho[2] == 0x4E && cabecalho[3] == 0x47
+                && cabecalho[4] == 0x0D && cabecalho[5] == 0x0A && cabecalho[6] == 0x1A && cabecalho[7] == 0x0A,
+
+            ".webp" =>
+                cabecalho.Length >= 12
+                && cabecalho[0] == (byte)'R' && cabecalho[1] == (byte)'I'
+                && cabecalho[2] == (byte)'F' && cabecalho[3] == (byte)'F'
+                && cabecalho[8] == (byte)'W' && cabecalho[9] == (byte)'E'
+                && cabecalho[10] == (byte)'B' && cabecalho[11] == (byte)'P',
+
+            _ => false
+        };
 }

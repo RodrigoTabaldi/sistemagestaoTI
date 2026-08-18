@@ -7,6 +7,7 @@ using Elcop.TI.Web.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.Extensions.Options;
 
 namespace Elcop.TI.Web.Controllers;
@@ -76,6 +77,7 @@ public class ContaController : Controller
     [HttpPost("Registrar")]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("Autenticacao")]
     public async Task<IActionResult> Registrar(RegistroViewModel model)
     {
         if (!_autoCadastro.Habilitado) return NotFound();
@@ -157,6 +159,7 @@ public class ContaController : Controller
     [HttpPost("Entrar")]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("Autenticacao")]
     public async Task<IActionResult> Entrar(LoginViewModel model)
     {
         // A tela precisa dos dados do Firebase e do link de cadastro em qualquer retorno com erro.
@@ -217,6 +220,7 @@ public class ContaController : Controller
     [HttpPost("EntrarFirebase")]
     [AllowAnonymous]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting("Autenticacao")]
     public async Task<IActionResult> EntrarFirebase(string idToken, string? urlRetorno = null)
     {
         if (_firebase is null || !_firebaseOpcoes.LoginDisponivel)

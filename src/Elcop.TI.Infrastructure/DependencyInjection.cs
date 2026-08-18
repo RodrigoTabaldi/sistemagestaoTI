@@ -74,11 +74,11 @@ public static class DependencyInjection
             options.Password.RequiredLength = 8;
             options.Password.RequireDigit = true;
             options.Password.RequireUppercase = true;
-            options.Password.RequireNonAlphanumeric = false;
+            options.Password.RequireNonAlphanumeric = true;
 
             options.User.RequireUniqueEmail = true;
 
-            // Bloquei,o temporário apósooo tentativdas seguidas de senha incorreta.
+            // Bloqueio temporário após tentativas seguidas de senha incorreta.
             options.Lockout.MaxFailedAccessAttempts = 5;
             options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(10);
         })

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace Elcop.TI.Infrastructure.Persistence;
@@ -26,12 +27,14 @@ public static class DbInitializer
         var logger = servicos.GetRequiredService<ILoggerFactory>().CreateLogger("DbInitializer");
         var db = servicos.GetRequiredService<AppDbContext>();
         var config = servicos.GetRequiredService<IConfiguration>();
+        var ambiente = servicos.GetRequiredService<IHostEnvironment>();
 
         await db.Database.MigrateAsync(ct);
         logger.LogInformation("Banco de dados atualizado.");
 
         await CriarPerfisAsync(servicos.GetRequiredService<RoleManager<IdentityRole>>(), ct);
-        await CriarAdministradorAsync(servicos.GetRequiredService<UserManager<ApplicationUser>>(), config, logger);
+        await CriarAdministradorAsync(
+            servicos.GetRequiredService<UserManager<ApplicationUser>>(), config, logger, ambiente);
     }
 
     private static async Task CriarPerfisAsync(RoleManager<IdentityRole> roles, CancellationToken ct)
@@ -49,7 +52,7 @@ public static class DbInitializer
     /// nenhuma, uma senha aleatória é gerada e registrada no log uma única vez.
     /// </summary>
     private static async Task CriarAdministradorAsync(
-        UserManager<ApplicationUser> users, IConfiguration config, ILogger logger)
+        UserManager<ApplicationUser> users, IConfiguration config, ILogger logger, IHostEnvironment ambiente)
     {
         var email = config["Elcop:Admin:Email"] ?? "admin@elcop.com.br";
 
@@ -60,6 +63,18 @@ public static class DbInitializer
         }
 
         var senhaConfigurada = config["Elcop:Admin:Senha"];
+
+        // Fora de Development, gerar e logar uma senha é um risco desnecessário — se o log for
+        // centralizado, a senha fica retida ali indefinidamente. Em produção é melhor falhar
+        // rápido e pedir a senha explicitamente do que criar uma conta cuja senha já vazou pro log.
+        if (string.IsNullOrWhiteSpace(senhaConfigurada) && !ambiente.IsDevelopment())
+        {
+            throw new InvalidOperationException(
+                "Elcop:Admin:Senha não foi configurada. Defina-a via user-secrets ou a variável de " +
+                "ambiente Elcop__Admin__Senha antes de subir o sistema fora de Development — " +
+                "fora de Development o administrador inicial não é criado com senha gerada e logada.");
+        }
+
         var senha = string.IsNullOrWhiteSpace(senhaConfigurada) ? GerarSenhaAleatoria() : senhaConfigurada;
 
         var admin = new ApplicationUser
@@ -102,19 +117,24 @@ public static class DbInitializer
         }
     }
 
-    /// <summary>Senha aleatória que satisfaz a política do Identity (8+, maiúscula, minúscula e dígito).</summary>
+    /// <summary>
+    /// Senha aleatória que satisfaz a política do Identity (8+, maiúscula, minúscula, dígito
+    /// e caractere especial).
+    /// </summary>
     private static string GerarSenhaAleatoria()
     {
         const string maiusculas = "ABCDEFGHJKLMNPQRSTUVWXYZ";
         const string minusculas = "abcdefghijkmnopqrstuvwxyz";
         const string digitos = "23456789";
-        const string todos = maiusculas + minusculas + digitos;
+        const string especiais = "!@#$%&*+=?";
+        const string todos = maiusculas + minusculas + digitos + especiais;
 
         var caracteres = new List<char>
         {
             maiusculas[RandomNumberGenerator.GetInt32(maiusculas.Length)],
             minusculas[RandomNumberGenerator.GetInt32(minusculas.Length)],
-            digitos[RandomNumberGenerator.GetInt32(digitos.Length)]
+            digitos[RandomNumberGenerator.GetInt32(digitos.Length)],
+            especiais[RandomNumberGenerator.GetInt32(especiais.Length)]
         };
 
         while (caracteres.Count < 14)

@@ -81,7 +81,7 @@ public class AtivosController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Criar(Ativo ativo, IFormFile? foto, CancellationToken ct)
     {
-        this.ValidarFoto(foto);
+        await this.ValidarFotoAsync(foto, ct);
 
         if (!ModelState.IsValid)
             return View("Formulario", new AtivoFormViewModel
@@ -118,7 +118,7 @@ public class AtivosController : Controller
     {
         if (id != ativo.Id) return BadRequest();
 
-        this.ValidarFoto(foto);
+        await this.ValidarFotoAsync(foto, ct);
 
         if (!ModelState.IsValid)
             return View("Formulario", new AtivoFormViewModel

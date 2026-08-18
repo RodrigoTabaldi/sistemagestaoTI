@@ -143,11 +143,21 @@ public class RelatorioService : IRelatorioService
             // BOM UTF-8: sem ele o Excel pt-BR quebra os acentos.
             Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(_conteudo.ToString())).ToArray();
 
+        /// <summary>Caracteres que o Excel/Sheets interpretam como início de fórmula.</summary>
+        private static readonly char[] GatilhosDeFormula = ['=', '+', '-', '@', '\t', '\r'];
+
         private static string Escapar(string? campo)
         {
             if (string.IsNullOrEmpty(campo)) return string.Empty;
 
             var texto = campo.Replace("\r\n", " ").Replace('\n', ' ').Replace('\r', ' ');
+
+            // CSV formula injection: um campo vindo de cadastro (nome, observação, tags) que
+            // comece com '=', '+', '-' ou '@' é executado como fórmula ao abrir no Excel/Sheets.
+            // Um apóstrofo neutraliza sem alterar o valor visível.
+            if (texto.Length > 0 && GatilhosDeFormula.Contains(texto[0]))
+                texto = "'" + texto;
+
             return texto.Contains(';') || texto.Contains('"')
                 ? $"\"{texto.Replace("\"", "\"\"")}\""
                 : texto;

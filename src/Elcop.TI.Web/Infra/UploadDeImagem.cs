@@ -13,19 +13,42 @@ public static class UploadDeImagem
     /// <summary>Nome do campo no formulário — usado também na chave do ModelState.</summary>
     public const string Campo = "Foto";
 
+    /// <summary>Maior assinatura binária conferida (o cabeçalho PNG tem 8 bytes, o do WEBP 12).</summary>
+    private const int TamanhoCabecalho = 12;
+
     /// <summary>
-    /// Valida extensão e tamanho, registrando o erro no ModelState quando o arquivo é
-    /// inaceitável. Devolve <c>true</c> quando não há nada que impeça o envio.
+    /// Valida extensão, tamanho e a assinatura binária do conteúdo (a extensão do nome é só o
+    /// que o navegador informou, nunca dado confiável), registrando o erro no ModelState quando
+    /// o arquivo é inaceitável. Devolve <c>true</c> quando não há nada que impeça o envio.
     /// </summary>
-    public static bool ValidarFoto(this Controller controller, IFormFile? arquivo)
+    public static async Task<bool> ValidarFotoAsync(
+        this Controller controller, IFormFile? arquivo, CancellationToken ct = default)
     {
         if (arquivo is null || arquivo.Length == 0) return true;
 
         var erro = RegrasDeUpload.Validar(arquivo.FileName, arquivo.Length);
-        if (erro is null) return true;
+        if (erro is not null)
+        {
+            controller.ModelState.AddModelError(Campo, erro);
+            return false;
+        }
 
-        controller.ModelState.AddModelError(Campo, erro);
-        return false;
+        var cabecalho = new byte[TamanhoCabecalho];
+        await using (var conteudo = arquivo.OpenReadStream())
+        {
+            var lidos = await conteudo.ReadAsync(cabecalho.AsMemory(0, TamanhoCabecalho), ct);
+            cabecalho = cabecalho[..lidos];
+        }
+
+        var extensao = Path.GetExtension(arquivo.FileName);
+        if (!RegrasDeUpload.AssinaturaCorresponde(cabecalho, extensao))
+        {
+            controller.ModelState.AddModelError(
+                Campo, "O conteúdo do arquivo não corresponde a uma imagem válida.");
+            return false;
+        }
+
+        return true;
     }
 
     /// <summary>

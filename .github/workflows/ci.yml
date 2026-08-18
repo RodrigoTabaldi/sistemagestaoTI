@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-e-testes:
+    name: Build e testes
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Instalar .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restaurar dependências
+        run: dotnet restore Elcop.TI.slnx
+
+      - name: Build (sem warnings tolerados)
+        run: dotnet build Elcop.TI.slnx --no-restore --configuration Release /warnaserror
+
+      - name: Testes
+        run: dotnet test Elcop.TI.slnx --no-build --configuration Release --logger "trx" --results-directory ./resultados-testes
+
+      - name: Publicar resultados dos testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultados-testes
+          path: resultados-testes

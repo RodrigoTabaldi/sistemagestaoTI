@@ -71,7 +71,7 @@ public class ColaboradoresController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Criar(Colaborador colaborador, IFormFile? foto, CancellationToken ct)
     {
-        this.ValidarFoto(foto);
+        await this.ValidarFotoAsync(foto, ct);
 
         if (!ModelState.IsValid)
             return View("Formulario", new ColaboradorFormViewModel
@@ -110,7 +110,7 @@ public class ColaboradoresController : Controller
     {
         if (id != colaborador.Id) return BadRequest();
 
-        this.ValidarFoto(foto);
+        await this.ValidarFotoAsync(foto, ct);
 
         if (!ModelState.IsValid)
             return View("Formulario", new ColaboradorFormViewModel
