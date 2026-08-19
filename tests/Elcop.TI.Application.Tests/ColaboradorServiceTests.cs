@@ -1,4 +1,4 @@
-using Elcop.TI.Application.Services;
+﻿using Elcop.TI.Application.Services;
 using Elcop.TI.Domain.Common;
 using Elcop.TI.Domain.Entities;
 using Elcop.TI.Domain.Enums;
@@ -45,6 +45,34 @@ public sealed class ColaboradorServiceTests : IDisposable
 
         var duplicado = NovoColaborador("0002", "pessoa@elcop.com.br");
         await Assert.ThrowsAsync<RegraDeNegocioException>(() => servico.CriarAsync(duplicado));
+    }
+
+    [Fact]
+    public async Task ObterPorEmailAsync_EncontraIgnorandoCaixaEEspacos()
+    {
+        await using var db = _factory.Criar();
+        var servico = CriarServico(db);
+
+        // É por este e-mail que o usuário logado vira solicitante ao abrir uma demanda.
+        var id = await servico.CriarAsync(NovoColaborador("0001", "Pessoa@Elcop.com.br"));
+
+        var encontrado = await servico.ObterPorEmailAsync("  pessoa@elcop.com.br  ");
+
+        Assert.NotNull(encontrado);
+        Assert.Equal(id, encontrado!.Id);
+    }
+
+    [Theory]
+    [InlineData("outra.pessoa@elcop.com.br")]
+    [InlineData("")]
+    public async Task ObterPorEmailAsync_SemCorrespondencia_RetornaNulo(string email)
+    {
+        await using var db = _factory.Criar();
+        var servico = CriarServico(db);
+
+        await servico.CriarAsync(NovoColaborador());
+
+        Assert.Null(await servico.ObterPorEmailAsync(email));
     }
 
     [Fact]

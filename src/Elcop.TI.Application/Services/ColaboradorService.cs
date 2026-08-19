@@ -1,4 +1,4 @@
-using Elcop.TI.Application.Common;
+﻿using Elcop.TI.Application.Common;
 using Elcop.TI.Application.Models;
 using Elcop.TI.Domain.Common;
 using Elcop.TI.Domain.Entities;
@@ -181,6 +181,16 @@ public class ColaboradorService : IColaboradorService
             .Where(c => c.Status == StatusColaborador.Ativo || c.Status == StatusColaborador.Ferias)
             .OrderBy(c => c.NomeCompleto)
             .ToListAsync(ct);
+
+    public Task<Colaborador?> ObterPorEmailAsync(string email, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(email)) return Task.FromResult<Colaborador?>(null);
+
+        var valor = email.Trim().ToLowerInvariant();
+        return _db.Colaboradores
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Email.ToLower() == valor, ct);
+    }
 
     public Task<bool> MatriculaEmUsoAsync(string matricula, int? ignorarId = null, CancellationToken ct = default)
     {

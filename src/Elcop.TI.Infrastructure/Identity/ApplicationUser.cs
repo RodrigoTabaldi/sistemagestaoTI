@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 
 namespace Elcop.TI.Infrastructure.Identity;
@@ -57,7 +57,7 @@ public static class Perfis
     {
         [Administrador] = "Acesso total, incluindo usuários, cadastros de apoio e auditoria.",
         [Tecnico] = "Cadastra ativos, registra entregas/devoluções e trata demandas.",
-        [Consulta] = "Somente leitura de inventário, movimentações e demandas."
+        [Consulta] = "Consulta inventário e movimentações; abre demandas para a TI atender."
     };
 
     public static readonly IReadOnlyList<string> Todos = new[] { Administrador, Tecnico, Consulta };

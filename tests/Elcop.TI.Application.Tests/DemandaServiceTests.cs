@@ -1,4 +1,4 @@
-using Elcop.TI.Application.Models;
+﻿using Elcop.TI.Application.Models;
 using Elcop.TI.Application.Services;
 using Elcop.TI.Domain.Common;
 using Elcop.TI.Domain.Entities;
@@ -55,6 +55,76 @@ public sealed class DemandaServiceTests : IDisposable
         Assert.NotNull(demanda);
         Assert.Single(demanda!.Andamentos);
         Assert.True(demanda.Andamentos.First().Automatico);
+    }
+
+    [Fact]
+    public async Task CriarAsync_ComApenasOTitulo_AplicaOsPadroesDoSistema()
+    {
+        await using var db = _factory.Criar();
+        var servico = CriarServico(db);
+
+        // Exatamente o que chega do formulário quando o usuário preenche só o nome da demanda.
+        var id = await servico.CriarAsync(new Demanda { Titulo = "Wi-Fi caindo na sala 2" });
+
+        var demanda = await servico.ObterCompletaAsync(id);
+
+        Assert.NotNull(demanda);
+        Assert.StartsWith($"DEM-{DateTime.Now.Year}-", demanda!.Codigo);
+        Assert.Equal(string.Empty, demanda.Descricao);
+        Assert.False(demanda.PossuiDescricao);
+        Assert.Equal(StatusDemanda.Aberta, demanda.Status);
+        Assert.Equal(CategoriaDemanda.Suporte, demanda.Categoria);
+        Assert.Equal(PrioridadeDemanda.Media, demanda.Prioridade);
+        Assert.NotNull(demanda.PrazoLimite);
+        Assert.NotEqual(default, demanda.DataAbertura);
+        Assert.Single(demanda.Andamentos);
+    }
+
+    [Fact]
+    public async Task CriarAsync_SemResponsavel_DeixaADemandaSemAtribuicao()
+    {
+        await using var db = _factory.Criar();
+        var servico = CriarServico(db);
+
+        // Quem registra não é necessariamente quem atende: a atribuição fica para a triagem.
+        var id = await servico.CriarAsync(new Demanda { Titulo = "Solicitação de acesso ao ERP" });
+
+        var demanda = await servico.ObterAsync(id);
+        Assert.Null(demanda!.Responsavel);
+    }
+
+    [Fact]
+    public async Task CriarAsync_AparaOsTextosEDescartaOsCamposEmBranco()
+    {
+        await using var db = _factory.Criar();
+        var servico = CriarServico(db);
+
+        var id = await servico.CriarAsync(new Demanda
+        {
+            Titulo = "   Monitor sem imagem   ",
+            Descricao = null,           // o binder envia null quando o campo fica vazio
+            Responsavel = "   ",
+            Tags = "  "
+        });
+
+        var demanda = await servico.ObterAsync(id);
+
+        Assert.Equal("Monitor sem imagem", demanda!.Titulo);
+        Assert.Equal(string.Empty, demanda.Descricao);
+        Assert.Null(demanda.Responsavel);
+        Assert.Null(demanda.Tags);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("    ")]
+    public async Task CriarAsync_SemTitulo_LancaRegraDeNegocio(string titulo)
+    {
+        await using var db = _factory.Criar();
+        var servico = CriarServico(db);
+
+        await Assert.ThrowsAsync<RegraDeNegocioException>(
+            () => servico.CriarAsync(new Demanda { Titulo = titulo }));
     }
 
     [Fact]

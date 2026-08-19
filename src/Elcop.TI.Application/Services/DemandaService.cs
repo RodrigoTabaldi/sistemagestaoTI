@@ -1,4 +1,4 @@
-using Elcop.TI.Application.Common;
+﻿using Elcop.TI.Application.Common;
 using Elcop.TI.Application.Models;
 using Elcop.TI.Domain.Common;
 using Elcop.TI.Domain.Entities;
@@ -90,10 +90,13 @@ public class DemandaService : IDemandaService
 
     public async Task<int> CriarAsync(Demanda demanda, CancellationToken ct = default)
     {
+        // Só o título é exigido: tudo o mais que ficar em branco recebe aqui um padrão
+        // coerente (código, data de abertura, SLA da prioridade, posição no quadro).
+        Normalizar(demanda);
+
         demanda.Codigo = await GerarCodigoAsync(ct);
         demanda.DataAbertura = demanda.DataAbertura == default ? DateTime.Now : demanda.DataAbertura;
         demanda.PrazoLimite ??= Demanda.CalcularPrazoSugerido(demanda.Prioridade, demanda.DataAbertura);
-        demanda.Responsavel ??= _usuario.NomeExibicao;
         demanda.Ordem = await ProximaOrdemAsync(demanda.Status, ct);
         demanda.MarcarCriacao(_usuario.NomeExibicao);
 
@@ -130,6 +133,8 @@ public class DemandaService : IDemandaService
 
     public async Task AtualizarAsync(Demanda demanda, CancellationToken ct = default)
     {
+        Normalizar(demanda);
+
         var existente = await _db.Demandas.FirstOrDefaultAsync(d => d.Id == demanda.Id, ct)
             ?? throw new RegraDeNegocioException("Demanda não encontrada.");
 
@@ -319,7 +324,7 @@ public class DemandaService : IDemandaService
             consulta = consulta.Where(d =>
                 EF.Functions.Like(d.Codigo, $"%{termo}%") ||
                 EF.Functions.Like(d.Titulo, $"%{termo}%") ||
-                EF.Functions.Like(d.Descricao, $"%{termo}%") ||
+                (d.Descricao != null && EF.Functions.Like(d.Descricao, $"%{termo}%")) ||
                 (d.Tags != null && EF.Functions.Like(d.Tags, $"%{termo}%")) ||
                 (d.Responsavel != null && EF.Functions.Like(d.Responsavel, $"%{termo}%")) ||
                 (d.Solicitante != null && EF.Functions.Like(d.Solicitante.NomeCompleto, $"%{termo}%")));
@@ -348,6 +353,29 @@ public class DemandaService : IDemandaService
                 && d.Status != StatusDemanda.Cancelada);
 
         return consulta;
+    }
+
+    /// <summary>
+    /// Apara os textos e traduz "não informado" para o valor que o resto do sistema espera:
+    /// descrição vazia (a coluna é NOT NULL) e nulo nos campos opcionais, para que um campo
+    /// deixado em branco no formulário não vire espaço em branco no banco nem apareça como
+    /// responsável/etiqueta fantasma nas listagens.
+    /// </summary>
+    private static void Normalizar(Demanda demanda)
+    {
+        demanda.Titulo = demanda.Titulo?.Trim() ?? string.Empty;
+
+        // A validação do formulário já barra isto; aqui vale para qualquer outro chamador.
+        if (string.IsNullOrWhiteSpace(demanda.Titulo))
+            throw new RegraDeNegocioException("Informe o título da demanda.");
+
+        demanda.Descricao = demanda.Descricao?.Trim() ?? string.Empty;
+        demanda.Responsavel = SeVazioNulo(demanda.Responsavel);
+        demanda.Tags = SeVazioNulo(demanda.Tags);
+        demanda.Solucao = SeVazioNulo(demanda.Solucao);
+
+        static string? SeVazioNulo(string? valor) =>
+            string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
     }
 
     private async Task<int> ProximaOrdemAsync(StatusDemanda status, CancellationToken ct)

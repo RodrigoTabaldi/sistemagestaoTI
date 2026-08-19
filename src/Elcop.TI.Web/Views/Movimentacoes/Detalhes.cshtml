@@ -1,8 +1,8 @@
-@model Movimentacao
+﻿@model Movimentacao
 @{
     ViewData["Titulo"] = Model.Protocolo;
     ViewData["Subtitulo"] = $"{Model.Tipo.ObterNome()} · {Model.Ativo?.DescricaoCurta}";
-    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+    var podeOperar = User.PodeOperar();
 }
 
 <div class="migalhas">

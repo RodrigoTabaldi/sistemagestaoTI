@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Elcop.TI.Domain.Common;
 using Elcop.TI.Domain.Enums;
@@ -15,15 +15,22 @@ public class Demanda : EntidadeBase
     [StringLength(30)]
     public string Codigo { get; set; } = string.Empty;
 
+    /// <summary>Único campo obrigatório: com ele já dá para registrar e triar a demanda.</summary>
     [Required(ErrorMessage = "Informe o título da demanda.")]
     [Display(Name = "Título")]
-    [StringLength(180, MinimumLength = 5)]
+    [StringLength(180, MinimumLength = 3,
+        ErrorMessage = "O título deve ter entre 3 e 180 caracteres.")]
     public string Titulo { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Descreva a demanda.")]
+    /// <summary>
+    /// Opcional — anulável de propósito: com <c>string</c> não anulável o ASP.NET Core infere
+    /// um [Required] e o campo em branco derruba o formulário. Quem abre a demanda nem sempre
+    /// sabe descrever o problema; o detalhamento pode vir depois pela linha do tempo.
+    /// No banco a coluna segue NOT NULL e o serviço grava string vazia.
+    /// </summary>
     [Display(Name = "Descrição")]
     [StringLength(5000)]
-    public string Descricao { get; set; } = string.Empty;
+    public string? Descricao { get; set; } = string.Empty;
 
     [Display(Name = "Categoria")]
     public CategoriaDemanda Categoria { get; set; } = CategoriaDemanda.Suporte;
@@ -90,6 +97,9 @@ public class Demanda : EntidadeBase
 
     [NotMapped]
     public bool Encerrada => Status is StatusDemanda.Concluida or StatusDemanda.Cancelada;
+
+    [NotMapped]
+    public bool PossuiDescricao => !string.IsNullOrWhiteSpace(Descricao);
 
     [NotMapped]
     public bool Atrasada =>

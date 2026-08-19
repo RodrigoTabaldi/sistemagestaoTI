@@ -1,4 +1,4 @@
-using Elcop.TI.Domain.Entities;
+﻿using Elcop.TI.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -14,6 +14,8 @@ public class DemandaConfiguration : IEntityTypeConfiguration<Demanda>
 
         builder.Property(d => d.Codigo).HasMaxLength(30).IsRequired();
         builder.Property(d => d.Titulo).HasMaxLength(180).IsRequired();
+        // Descrição é opcional no formulário, mas a coluna continua NOT NULL: "sem descrição"
+        // é gravado como string vazia (ver DemandaService.Normalizar).
         builder.Property(d => d.Descricao).IsRequired();
 
         builder.HasIndex(d => d.Codigo).IsUnique();

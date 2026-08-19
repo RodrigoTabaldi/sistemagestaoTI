@@ -1,4 +1,4 @@
-/* ==========================================================================
+﻿/* ==========================================================================
    ELCOP · Gestão de TI — Design System
 
    Paleta derivada da marca: vinho (#8B1F26) + grafite (#3D3D3D).
@@ -477,6 +477,7 @@ svg { flex-shrink: 0; }
 .campo { display: flex; flex-direction: column; gap: .32rem; min-width: 0; }
 .campo > label { font-size: .8rem; font-weight: 500; color: var(--texto-padrao); }
 .campo .ajuda { font-size: .74rem; color: var(--texto-tenue); }
+.campo > label .obrigatorio { color: var(--cor-perigo); font-weight: 600; margin-left: .1rem; }
 
 .entrada, select.entrada, textarea.entrada {
     width: 100%;

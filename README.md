@@ -1,4 +1,4 @@
-# ELCOP · Gestão de TI
+﻿# ELCOP · Gestão de TI
 
 Sistema web para **controle de estoque/inventário de ativos de TI** e **gestão de demandas**,
 construído em ASP.NET Core 8 (MVC) com EF Core, arquitetura em camadas e front-end próprio.
@@ -7,58 +7,10 @@ construído em ASP.NET Core 8 (MVC) com EF Core, arquitetura em camadas e front-
 
 ## Como executar
 
-Defina a senha do administrador **antes da primeira execução** e suba a aplicação:
+Abra o terminal na pasta raiz Web do projeto e execute:
+dotnet run
 
-```bash
-cd C:\Softelcop
-dotnet user-secrets set "Elcop:Admin:Senha" "SuaSenhaForte1" --project src\Elcop.TI.Web
-dotnet run --project src\Elcop.TI.Web
-```
-
-Acesse a porta indicada no console (por padrão **http://localhost:5057**).
-
-Na primeira execução o sistema cria o banco SQLite (`elcop-ti.db`), aplica as migrations,
-cadastra os perfis de acesso e cria **um único usuário administrador**. O banco nasce vazio:
-todo o conteúdo é cadastrado por você.
-
-### Primeiro acesso
-
-| | |
-|---|---|
-| E-mail | o valor de `Elcop:Admin:Email` (padrão `admin@elcop.com.br`) |
-| Senha  | o valor de `Elcop:Admin:Senha` |
-
-Se `Elcop:Admin:Senha` não estiver definida, o sistema **gera uma senha aleatória e a escreve
-no log de inicialização** — ela aparece uma única vez, na execução que criou o usuário.
-Alternativa ao user-secrets: a variável de ambiente `Elcop__Admin__Senha`.
-
-Os demais usuários são criados em **Usuários → Novo**, ou se cadastram sozinhos pela tela de
-login (veja abaixo).
-
-> A senha nunca fica no `appsettings.json` e não é exibida na tela de login.
-
-### Autocadastro
-
-A tela de login traz um link **Criar conta**. Por padrão a conta nasce **desabilitada**: quem se
-cadastra recebe o perfil `Consulta` e só entra depois que um administrador libera o acesso em
-**Usuários**. Enquanto isso, o login responde *"Este acesso ainda não foi liberado"*.
-
-```jsonc
-"Elcop": {
-  "AutoCadastro": {
-    "Habilitado": true,
-    "PerfilPadrao": "Consulta",
-    "AprovacaoAutomatica": false,      // true = entra na hora, sem aprovação
-    "DominiosPermitidos": []           // ex.: [ "elcop.com.br" ] restringe o e-mail
-  }
-}
-```
-
-- `Habilitado: false` remove o link e bloqueia as rotas de cadastro (404).
-- `AprovacaoAutomatica: true` dá acesso imediato a qualquer pessoa que abra a tela de login —
-  use apenas em rede interna confiável, e de preferência junto com `DominiosPermitidos`.
-- Cadastro com e-mail já existente devolve a mesma tela de sucesso, sem criar nada: a tela não
-  serve para descobrir quem tem conta.
+Cole o endereço  ex : `https://localhost:5001` no navegador. A primeira execução cria o banco.
 
 ---
 
@@ -117,6 +69,8 @@ serviços permanecem testáveis.
 
 ### Demandas
 - Código automático `DEM-2026-0001`, 11 categorias, 4 prioridades, 6 status, etiquetas.
+- **Abertura em um campo**: só o título é obrigatório — categoria, prioridade, prazo, solicitante
+  e descrição têm padrão, e qualquer perfil pode registrar a própria demanda.
 - **SLA sugerido pela prioridade** (crítica 4 h · alta 1 dia · média 3 dias · baixa 7 dias).
 - **Linha do tempo** com todos os andamentos, apontamento de horas e progresso.
 - **Quadro kanban com arrastar e soltar** — cada movimento vira um registro na linha do tempo.
@@ -278,7 +232,13 @@ detectada sozinha. Fora do Google Cloud, aponte o JSON da conta de serviço:
 |-----------------|-----------|
 | `Administrador` | Tudo, incluindo usuários, cadastros de apoio e auditoria |
 | `Tecnico`       | Cadastra ativos/colaboradores, movimenta e trata demandas |
-| `Consulta`      | Somente leitura de inventário, movimentações e demandas |
+| `Consulta`      | Leitura de inventário e movimentações; **abre e acompanha demandas** |
 
 Toda a aplicação exige autenticação por padrão (`FallbackPolicy`); o acesso anônimo é declarado
 explicitamente apenas nas telas de login e erro.
+
+Abrir demanda é a única escrita liberada ao perfil `Consulta` (política `AbrirDemanda`): ele
+registra o chamado num formulário enxuto e entra como solicitante. A condução do atendimento —
+status, prazo, responsável, progresso e solução — continua restrita a `Administrador` e `Tecnico`
+(política `Operar`), inclusive contra POST forjado: o controller descarta esses campos em vez de
+apenas escondê-los do formulário.

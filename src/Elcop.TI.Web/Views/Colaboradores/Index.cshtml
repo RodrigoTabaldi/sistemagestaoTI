@@ -1,8 +1,8 @@
-@model ListagemColaboradoresViewModel
+﻿@model ListagemColaboradoresViewModel
 @{
     ViewData["Titulo"] = "Colaboradores";
     ViewData["Subtitulo"] = $"{Model.Pagina.TotalItens:N0} pessoa(s) cadastrada(s)";
-    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+    var podeOperar = User.PodeOperar();
 }
 
 <div class="cabecalho-pagina">

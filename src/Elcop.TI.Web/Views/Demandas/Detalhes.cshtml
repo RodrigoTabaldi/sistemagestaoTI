@@ -1,9 +1,9 @@
-@model DetalhesDemandaViewModel
+﻿@model DetalhesDemandaViewModel
 @{
     var demanda = Model.Demanda;
     ViewData["Titulo"] = demanda.Codigo;
     ViewData["Subtitulo"] = demanda.Titulo;
-    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+    var podeOperar = User.PodeOperar();
 }
 
 <div class="migalhas">
@@ -65,7 +65,16 @@
                 </div>
             </div>
             <div class="cartao__corpo">
-                <p style="white-space:pre-line;margin:0">@demanda.Descricao</p>
+                @if (demanda.PossuiDescricao)
+                {
+                    <p style="white-space:pre-line;margin:0">@demanda.Descricao</p>
+                }
+                else
+                {
+                    <p class="texto-tenue pequeno" style="margin:0">
+                        Aberta sem descrição — o detalhamento pode ser registrado na linha do tempo.
+                    </p>
+                }
 
                 @if (!string.IsNullOrWhiteSpace(demanda.Solucao))
                 {

@@ -1,9 +1,9 @@
-@using System.Security.Claims
+﻿@using System.Security.Claims
 @{
     var nomeUsuario = User.FindFirst(ClaimTypes.GivenName)?.Value ?? User.Identity?.Name ?? "Usuário";
     var iniciais = User.FindFirst("iniciais")?.Value ?? "?";
     var cargo = User.FindFirst("cargo")?.Value;
-    var perfil = User.IsInRole(Perfis.Administrador) ? "Administrador"
+    var perfil = User.EhAdministrador() ? "Administrador"
         : User.IsInRole(Perfis.Tecnico) ? "Técnico" : "Consulta";
 }
 <!DOCTYPE html>

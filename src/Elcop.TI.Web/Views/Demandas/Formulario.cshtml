@@ -1,5 +1,9 @@
-@model DemandaFormViewModel
+﻿@model DemandaFormViewModel
 @{
+    // A TI preenche o formulário completo; quem apenas solicita vê a versão enxuta —
+    // o controller monta as listas do mesmo jeito, então as duas visões nunca divergem.
+    var podeOperar = User.PodeOperar();
+
     ViewData["Titulo"] = Model.Titulo;
     ViewData["Subtitulo"] = Model.Edicao ? Model.Demanda.Titulo : "Registro de nova demanda de TI";
 }
@@ -11,19 +15,31 @@
 <div class="cabecalho-pagina">
     <div>
         <h1>@Model.Titulo</h1>
-        <p>Quanto mais completo o registro, mais fácil retomar o atendimento depois. O prazo é sugerido pela prioridade.</p>
+        <p>
+            @if (podeOperar)
+            {
+                <text>Quanto mais completo o registro, mais fácil retomar o atendimento depois. O prazo é sugerido pela prioridade.</text>
+            }
+            else
+            {
+                <text>Só o título é obrigatório — o resto ajuda, mas pode ficar em branco. A TI define prazo e responsável na triagem.</text>
+            }
+        </p>
     </div>
 </div>
 
 <form asp-action="@(Model.Edicao ? "Editar" : "Criar")" asp-route-id="@(Model.Edicao ? Model.Demanda.Id : null)"
       method="post" novalidate>
+    @* Código, CriadoEm e CriadoPor são do servidor: não trafegam pelo formulário. Trazê-los
+       como hidden só criava um campo obrigatório em branco na abertura — a demanda era
+       recusada sem nenhuma mensagem, porque erro de campo oculto não aparece na tela. *@
     <input type="hidden" asp-for="Demanda.Id" />
-    <input type="hidden" asp-for="Demanda.Codigo" />
-    <input type="hidden" asp-for="Demanda.CriadoEm" />
     <input type="hidden" asp-for="Demanda.DataInicio" />
     <input type="hidden" asp-for="Demanda.DataConclusao" />
 
-    <div asp-validation-summary="ModelOnly" class="alerta alerta--critico mb-3"
+    @* "All" e não "ModelOnly": um erro de propriedade sem campo visível não pode
+       recarregar a tela em silêncio, deixando o usuário sem saber o que faltou. *@
+    <div asp-validation-summary="All" class="alerta alerta--critico mb-3"
          style="@(ViewData.ModelState.ErrorCount > 0 ? "" : "display:none")">
         <svg viewBox="0 0 24 24"><use href="#i-alerta" /></svg>
         <div class="validation-summary-errors crescer"></div>
@@ -35,8 +51,8 @@
                 <legend><svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg> Descrição da demanda</legend>
                 <div class="form-grade">
                     <div class="campo col-12">
-                        <label asp-for="Demanda.Titulo"></label>
-                        <input asp-for="Demanda.Titulo" class="entrada"
+                        <label asp-for="Demanda.Titulo">@Html.DisplayNameFor(m => m.Demanda.Titulo) <span class="obrigatorio" aria-hidden="true">*</span></label>
+                        <input asp-for="Demanda.Titulo" class="entrada" autofocus
                                placeholder="Resuma a demanda em uma frase" />
                         <span asp-validation-for="Demanda.Titulo"></span>
                     </div>
@@ -44,13 +60,17 @@
                         <label asp-for="Demanda.Descricao"></label>
                         <textarea asp-for="Demanda.Descricao" class="entrada" rows="7"
                                   placeholder="Contexto, o que foi observado, o que já foi tentado, impacto para o usuário…"></textarea>
+                        <span class="ajuda">Opcional. Pode ser detalhada depois, na linha do tempo da demanda.</span>
                         <span asp-validation-for="Demanda.Descricao"></span>
                     </div>
-                    <div class="campo col-12">
-                        <label asp-for="Demanda.Tags"></label>
-                        <input asp-for="Demanda.Tags" class="entrada" placeholder="rede, urgente, filial-norte" />
-                        <span class="ajuda">Separe por vírgulas. Ajuda a buscar demandas semelhantes depois.</span>
-                    </div>
+                    @if (podeOperar)
+                    {
+                        <div class="campo col-12">
+                            <label asp-for="Demanda.Tags"></label>
+                            <input asp-for="Demanda.Tags" class="entrada" placeholder="rede, urgente, filial-norte" />
+                            <span class="ajuda">Separe por vírgulas. Ajuda a buscar demandas semelhantes depois.</span>
+                        </div>
+                    }
                 </div>
             </fieldset>
 
@@ -83,57 +103,84 @@
                         <select asp-for="Demanda.Categoria" class="entrada"
                                 asp-items="ListaDeEnum<CategoriaDemanda>(Model.Demanda.Categoria)"></select>
                     </div>
-                    <div class="campo col-6">
+                    <div class="campo @(podeOperar ? "col-6" : "col-12")">
                         <label asp-for="Demanda.Prioridade"></label>
                         <select asp-for="Demanda.Prioridade" class="entrada" id="campo-prioridade"
                                 asp-items="ListaDeEnum<PrioridadeDemanda>(Model.Demanda.Prioridade)"></select>
+                        @if (!podeOperar)
+                        {
+                            <span class="ajuda">O prazo de atendimento é calculado a partir da prioridade.</span>
+                        }
                     </div>
-                    <div class="campo col-6">
-                        <label asp-for="Demanda.Status"></label>
-                        <select asp-for="Demanda.Status" class="entrada"
-                                asp-items="ListaDeEnum<StatusDemanda>(Model.Demanda.Status)"></select>
-                    </div>
-                    <div class="campo col-12">
-                        <label asp-for="Demanda.PrazoLimite"></label>
-                        <input asp-for="Demanda.PrazoLimite" class="entrada" type="date" id="campo-prazo" />
-                        <span class="ajuda" id="ajuda-prazo">Deixe em branco para usar o SLA sugerido pela prioridade.</span>
-                    </div>
+                    @if (podeOperar)
+                    {
+                        <div class="campo col-6">
+                            <label asp-for="Demanda.Status"></label>
+                            <select asp-for="Demanda.Status" class="entrada"
+                                    asp-items="ListaDeEnum<StatusDemanda>(Model.Demanda.Status)"></select>
+                        </div>
+                        <div class="campo col-12">
+                            <label asp-for="Demanda.PrazoLimite"></label>
+                            <input asp-for="Demanda.PrazoLimite" class="entrada" type="date" id="campo-prazo" />
+                            <span class="ajuda" id="ajuda-prazo">Deixe em branco para usar o SLA sugerido pela prioridade.</span>
+                        </div>
+                    }
                 </div>
             </fieldset>
 
             <fieldset class="secao">
                 <legend><svg viewBox="0 0 24 24"><use href="#i-usuario" /></svg> Envolvidos</legend>
                 <div class="form-grade">
-                    <div class="campo col-12">
-                        <label asp-for="Demanda.SolicitanteId"></label>
-                        <select asp-for="Demanda.SolicitanteId" class="entrada" asp-items="Model.Listas.Colaboradores">
-                            <option value="">Não informado</option>
-                        </select>
-                    </div>
-                    <div class="campo col-12">
-                        <label asp-for="Demanda.DepartamentoId"></label>
-                        <select asp-for="Demanda.DepartamentoId" class="entrada" asp-items="Model.Listas.Departamentos">
-                            <option value="">Herdar do solicitante</option>
-                        </select>
-                    </div>
-                    <div class="campo col-12">
-                        <label asp-for="Demanda.Responsavel"></label>
-                        <input asp-for="Demanda.Responsavel" class="entrada" list="responsaveis-sugeridos"
-                               placeholder="Quem vai atender" />
-                        <datalist id="responsaveis-sugeridos">
-                            @foreach (var responsavel in Model.Listas.Responsaveis)
-                            {
-                                <option value="@responsavel.Value"></option>
-                            }
-                        </datalist>
-                    </div>
-                    <div class="campo col-12">
-                        <label asp-for="Demanda.AtivoId"></label>
-                        <select asp-for="Demanda.AtivoId" class="entrada" asp-items="Model.Listas.Ativos">
-                            <option value="">Nenhum ativo relacionado</option>
-                        </select>
-                        <span class="ajuda">Vincule quando a demanda for sobre um equipamento específico.</span>
-                    </div>
+                    @if (podeOperar)
+                    {
+                        <div class="campo col-12">
+                            <label asp-for="Demanda.SolicitanteId"></label>
+                            <select asp-for="Demanda.SolicitanteId" class="entrada" asp-items="Model.Listas.Colaboradores">
+                                <option value="">Não informado</option>
+                            </select>
+                        </div>
+                        <div class="campo col-12">
+                            <label asp-for="Demanda.DepartamentoId"></label>
+                            <select asp-for="Demanda.DepartamentoId" class="entrada" asp-items="Model.Listas.Departamentos">
+                                <option value="">Herdar do solicitante</option>
+                            </select>
+                        </div>
+                        <div class="campo col-12">
+                            <label asp-for="Demanda.Responsavel"></label>
+                            <input asp-for="Demanda.Responsavel" class="entrada" list="responsaveis-sugeridos"
+                                   placeholder="Quem vai atender" />
+                            <datalist id="responsaveis-sugeridos">
+                                @foreach (var responsavel in Model.Listas.Responsaveis)
+                                {
+                                    <option value="@responsavel.Value"></option>
+                                }
+                            </datalist>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="campo col-12">
+                            <p class="ajuda" style="margin:0">
+                                A demanda é registrada em seu nome. A TI define o responsável e o prazo
+                                assim que fizer a triagem, e você acompanha tudo pela linha do tempo.
+                            </p>
+                        </div>
+                    }
+
+                    @if (podeOperar || Model.Listas.Ativos.Any())
+                    {
+                        <div class="campo col-12">
+                            <label asp-for="Demanda.AtivoId"></label>
+                            <select asp-for="Demanda.AtivoId" class="entrada" asp-items="Model.Listas.Ativos">
+                                <option value="">Nenhum ativo relacionado</option>
+                            </select>
+                            <span class="ajuda">
+                                @(podeOperar
+                                    ? "Vincule quando a demanda for sobre um equipamento específico."
+                                    : "Se a demanda for sobre um equipamento seu, selecione-o aqui.")
+                            </span>
+                        </div>
+                    }
                 </div>
             </fieldset>
         </div>
@@ -159,6 +206,9 @@
             var prioridade = document.getElementById("campo-prioridade");
             var ajuda = document.getElementById("ajuda-prazo");
             var prazo = document.getElementById("campo-prazo");
+
+            // O formulário do solicitante não tem campo de prazo: nada a sugerir.
+            if (!prioridade || !ajuda || !prazo) return;
 
             prioridade.addEventListener("change", function () {
                 var valor = prioridade.options[prioridade.selectedIndex].value;

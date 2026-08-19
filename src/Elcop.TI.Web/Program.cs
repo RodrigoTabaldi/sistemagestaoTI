@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Threading.RateLimiting;
 using Elcop.TI.Application;
 using Elcop.TI.Application.Common;
@@ -68,6 +68,11 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy(Politicas.Administrar, p => p.RequireRole(Perfis.Administrador));
     options.AddPolicy(Politicas.Operar, p => p.RequireRole(Perfis.Administrador, Perfis.Tecnico));
+
+    // Abrir demanda é de todo mundo: o usuário comum registra o chamado e a TI conduz o
+    // atendimento. Exigir um perfil conhecido (e não apenas autenticação) mantém a regra
+    // explícita — conta sem perfil atribuído continua sem poder escrever nada.
+    options.AddPolicy(Politicas.AbrirDemanda, p => p.RequireRole(Perfis.Todos));
 });
 
 builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");

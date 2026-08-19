@@ -1,8 +1,8 @@
-@model ListagemAtivosViewModel
+﻿@model ListagemAtivosViewModel
 @{
     ViewData["Titulo"] = "Ativos";
     ViewData["Subtitulo"] = $"{Model.Pagina.TotalItens:N0} equipamento(s) no inventário";
-    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+    var podeOperar = User.PodeOperar();
 }
 
 <div class="cabecalho-pagina">

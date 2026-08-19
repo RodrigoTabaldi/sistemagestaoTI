@@ -1,8 +1,8 @@
-@model ListagemMovimentacoesViewModel
+﻿@model ListagemMovimentacoesViewModel
 @{
     ViewData["Titulo"] = "Movimentações";
     ViewData["Subtitulo"] = $"{Model.TotalEmAberto} termo(s) em aberto";
-    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+    var podeOperar = User.PodeOperar();
 }
 
 <div class="cabecalho-pagina">

@@ -1,8 +1,10 @@
-@model QuadroDemandasViewModel
+﻿@model QuadroDemandasViewModel
 @{
     ViewData["Titulo"] = "Quadro de demandas";
     ViewData["Subtitulo"] = $"{Model.Quadro.TotalDemandas} demanda(s) no quadro";
-    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+    var podeOperar = User.PodeOperar();
+    // Abrir demanda é de qualquer perfil; conduzir o atendimento continua sendo da TI.
+    var podeAbrirDemanda = User.PodeAbrirDemanda();
 
     var coresColuna = new Dictionary<StatusDemanda, string>
     {
@@ -26,7 +28,7 @@
         <a class="btn btn--contorno" asp-action="Index">
             <svg viewBox="0 0 24 24"><use href="#i-relatorio" /></svg> Ver em lista
         </a>
-        @if (podeOperar)
+        @if (podeAbrirDemanda)
         {
             <a class="btn btn--primario" asp-action="Criar">
                 <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg> Nova demanda
@@ -67,7 +69,7 @@
             <svg viewBox="0 0 24 24"><use href="#i-quadro" /></svg>
             <h3>Quadro vazio</h3>
             <p>Nenhuma demanda ativa corresponde aos filtros. Registre uma nova demanda para começar.</p>
-            @if (podeOperar)
+            @if (podeAbrirDemanda)
             {
                 <a class="btn btn--primario btn--pequeno" asp-action="Criar">Nova demanda</a>
             }

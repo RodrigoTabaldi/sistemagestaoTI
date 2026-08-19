@@ -1,8 +1,10 @@
-@model ListagemDemandasViewModel
+﻿@model ListagemDemandasViewModel
 @{
     ViewData["Titulo"] = "Demandas";
     ViewData["Subtitulo"] = $"{Model.TotalAbertas} em aberto · {Model.TotalAtrasadas} fora do prazo";
-    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+    var podeOperar = User.PodeOperar();
+    // Abrir demanda é de qualquer perfil; conduzir o atendimento continua sendo da TI.
+    var podeAbrirDemanda = User.PodeAbrirDemanda();
 }
 
 <div class="cabecalho-pagina">
@@ -18,7 +20,7 @@
            asp-all-route-data="@Context.Request.Query.ToDictionary(q => q.Key, q => q.Value.ToString())">
             <svg viewBox="0 0 24 24"><use href="#i-download" /></svg> Exportar CSV
         </a>
-        @if (podeOperar)
+        @if (podeAbrirDemanda)
         {
             <a class="btn btn--primario" asp-action="Criar">
                 <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg> Nova demanda
@@ -149,7 +151,7 @@
                     ? "Nenhuma demanda corresponde aos filtros aplicados."
                     : "Registre a primeira demanda para começar a acompanhar os atendimentos de TI.")
             </p>
-            @if (podeOperar)
+            @if (podeAbrirDemanda)
             {
                 <a class="btn btn--primario btn--pequeno" asp-action="Criar">Nova demanda</a>
             }

@@ -1,9 +1,9 @@
-@model DetalhesAtivoViewModel
+﻿@model DetalhesAtivoViewModel
 @{
     var ativo = Model.Ativo;
     ViewData["Titulo"] = ativo.Patrimonio;
     ViewData["Subtitulo"] = ativo.DescricaoCurta;
-    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+    var podeOperar = User.PodeOperar();
 }
 
 <div class="migalhas">

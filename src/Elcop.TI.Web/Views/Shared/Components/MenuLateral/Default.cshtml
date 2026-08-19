@@ -1,4 +1,4 @@
-@model Elcop.TI.Web.ViewComponents.ContadoresMenu
+﻿@model Elcop.TI.Web.ViewComponents.ContadoresMenu
 @{
     var controlador = (ViewContext.RouteData.Values["controller"] as string) ?? "Painel";
     var acao = (ViewContext.RouteData.Values["action"] as string) ?? "Index";
@@ -25,8 +25,8 @@
         return "ativo";
     }
 
-    var ehAdmin = User.IsInRole(Perfis.Administrador);
-    var podeOperar = ehAdmin || User.IsInRole(Perfis.Tecnico);
+    var ehAdmin = User.EhAdministrador();
+    var podeOperar = User.PodeOperar();
 }
 
 <aside class="sidebar" aria-label="Menu principal">
@@ -76,7 +76,8 @@
         }
 
         <div class="sidebar__grupo">Atendimento</div>
-        <a class="sidebar__item @Ativo("Demandas", exceto: new[] { "Quadro" })"
+        @* Para quem só solicita, "Abrir demanda" é um item próprio — daí o Criar entrar no exceto. *@
+        <a class="sidebar__item @Ativo("Demandas", exceto: podeOperar ? new[] { "Quadro" } : new[] { "Quadro", "Criar" })"
            asp-controller="Demandas" asp-action="Index">
             <svg viewBox="0 0 24 24"><use href="#i-demandas" /></svg>
             <span>Demandas</span>
@@ -88,6 +89,12 @@
         <a class="sidebar__item @Ativo("Demandas", "Quadro")" asp-controller="Demandas" asp-action="Quadro">
             <svg viewBox="0 0 24 24"><use href="#i-quadro" /></svg><span>Quadro kanban</span>
         </a>
+        @if (!podeOperar)
+        {
+            <a class="sidebar__item @Ativo("Demandas", "Criar")" asp-controller="Demandas" asp-action="Criar">
+                <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg><span>Abrir demanda</span>
+            </a>
+        }
 
         <div class="sidebar__grupo">Análise</div>
         <a class="sidebar__item @Ativo("Relatorios")" asp-controller="Relatorios" asp-action="Index">

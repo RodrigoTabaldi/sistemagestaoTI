@@ -1,9 +1,9 @@
-@model DetalhesColaboradorViewModel
+﻿@model DetalhesColaboradorViewModel
 @{
     var colaborador = Model.Colaborador;
     ViewData["Titulo"] = colaborador.NomeCompleto;
     ViewData["Subtitulo"] = $"Matrícula {colaborador.Matricula}";
-    var podeOperar = User.IsInRole(Perfis.Administrador) || User.IsInRole(Perfis.Tecnico);
+    var podeOperar = User.PodeOperar();
 }
 
 <div class="migalhas">

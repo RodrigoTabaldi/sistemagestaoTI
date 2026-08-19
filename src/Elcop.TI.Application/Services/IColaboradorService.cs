@@ -1,4 +1,4 @@
-using Elcop.TI.Application.Common;
+﻿using Elcop.TI.Application.Common;
 using Elcop.TI.Application.Models;
 using Elcop.TI.Domain.Entities;
 
@@ -26,6 +26,12 @@ public interface IColaboradorService
         IEnumerable<int> colaboradorIds, CancellationToken ct = default);
 
     Task<IReadOnlyList<Colaborador>> ListarParaSelecaoAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Colaborador cujo e-mail corporativo corresponde ao informado. Usado para ligar o
+    /// usuário logado à pessoa do cadastro quando ele abre uma demanda.
+    /// </summary>
+    Task<Colaborador?> ObterPorEmailAsync(string email, CancellationToken ct = default);
 
     Task<bool> MatriculaEmUsoAsync(string matricula, int? ignorarId = null, CancellationToken ct = default);
 
