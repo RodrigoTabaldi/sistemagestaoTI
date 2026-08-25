@@ -73,6 +73,11 @@ builder.Services.AddAuthorization(options =>
     // atendimento. Exigir um perfil conhecido (e não apenas autenticação) mantém a regra
     // explícita — conta sem perfil atribuído continua sem poder escrever nada.
     options.AddPolicy(Politicas.AbrirDemanda, p => p.RequireRole(Perfis.Todos));
+
+    // Cadastrar colaborador/ativo também é de todo mundo, pelo mesmo motivo: qualquer
+    // perfil conhecido pode criar o registro, mas editar ou excluir o que já existe
+    // continua exigindo Operar.
+    options.AddPolicy(Politicas.Cadastrar, p => p.RequireRole(Perfis.Todos));
 });
 
 builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");

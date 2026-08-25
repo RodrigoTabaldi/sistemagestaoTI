@@ -58,7 +58,7 @@ public class AtivosController : Controller
         });
     }
 
-    [Authorize(Policy = Politicas.Operar)]
+    [Authorize(Policy = Politicas.Cadastrar)]
     public async Task<IActionResult> Criar(CancellationToken ct)
     {
         var modelo = new AtivoFormViewModel
@@ -77,7 +77,7 @@ public class AtivosController : Controller
     }
 
     [HttpPost]
-    [Authorize(Policy = Politicas.Operar)]
+    [Authorize(Policy = Politicas.Cadastrar)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Criar(Ativo ativo, IFormFile? foto, CancellationToken ct)
     {

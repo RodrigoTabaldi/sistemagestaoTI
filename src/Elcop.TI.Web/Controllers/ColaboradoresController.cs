@@ -58,7 +58,7 @@ public class ColaboradoresController : Controller
         });
     }
 
-    [Authorize(Policy = Politicas.Operar)]
+    [Authorize(Policy = Politicas.Cadastrar)]
     public async Task<IActionResult> Criar(CancellationToken ct) =>
         View("Formulario", new ColaboradorFormViewModel
         {
@@ -67,7 +67,7 @@ public class ColaboradoresController : Controller
         });
 
     [HttpPost]
-    [Authorize(Policy = Politicas.Operar)]
+    [Authorize(Policy = Politicas.Cadastrar)]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Criar(Colaborador colaborador, IFormFile? foto, CancellationToken ct)
     {

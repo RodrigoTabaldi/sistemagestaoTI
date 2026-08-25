@@ -21,4 +21,8 @@ public static class PermissoesDoUsuario
     /// <summary>Todo usuário com perfil pode registrar a própria demanda.</summary>
     public static bool PodeAbrirDemanda(this ClaimsPrincipal usuario) =>
         Perfis.Todos.Any(usuario.IsInRole);
+
+    /// <summary>Todo usuário com perfil pode cadastrar colaboradores e ativos.</summary>
+    public static bool PodeCadastrar(this ClaimsPrincipal usuario) =>
+        Perfis.Todos.Any(usuario.IsInRole);
 }

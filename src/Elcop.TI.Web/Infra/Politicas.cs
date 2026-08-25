@@ -6,7 +6,7 @@ public static class Politicas
     /// <summary>Exclusivo do administrador: usuários, cadastros de apoio e auditoria.</summary>
     public const string Administrar = "Administrar";
 
-    /// <summary>Administrador ou técnico: cria, edita, movimenta e trata demandas.</summary>
+    /// <summary>Administrador ou técnico: edita, exclui, movimenta e trata demandas.</summary>
     public const string Operar = "Operar";
 
     /// <summary>
@@ -15,4 +15,10 @@ public static class Politicas
     /// da equipe de TI (ver <see cref="Operar"/>).
     /// </summary>
     public const string AbrirDemanda = "AbrirDemanda";
+
+    /// <summary>
+    /// Qualquer perfil pode cadastrar novos colaboradores e ativos. Editar, excluir e
+    /// movimentar o que já existe continua exigindo <see cref="Operar"/>.
+    /// </summary>
+    public const string Cadastrar = "Cadastrar";
 }

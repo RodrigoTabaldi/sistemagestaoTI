@@ -3,6 +3,7 @@
     ViewData["Titulo"] = "Colaboradores";
     ViewData["Subtitulo"] = $"{Model.Pagina.TotalItens:N0} pessoa(s) cadastrada(s)";
     var podeOperar = User.PodeOperar();
+    var podeCadastrar = User.PodeCadastrar();
 }
 
 <div class="cabecalho-pagina">
@@ -15,7 +16,7 @@
            asp-all-route-data="@Context.Request.Query.ToDictionary(q => q.Key, q => q.Value.ToString())">
             <svg viewBox="0 0 24 24"><use href="#i-download" /></svg> Exportar CSV
         </a>
-        @if (podeOperar)
+        @if (podeCadastrar)
         {
             <a class="btn btn--primario" asp-action="Criar">
                 <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg> Novo colaborador
@@ -66,7 +67,7 @@
             <svg viewBox="0 0 24 24"><use href="#i-usuarios" /></svg>
             <h3>Nenhum colaborador encontrado</h3>
             <p>Cadastre as pessoas da empresa para poder registrar entregas de equipamentos.</p>
-            @if (podeOperar)
+            @if (podeCadastrar)
             {
                 <a class="btn btn--primario btn--pequeno" asp-action="Criar">Cadastrar colaborador</a>
             }

@@ -3,6 +3,7 @@
     ViewData["Titulo"] = "Ativos";
     ViewData["Subtitulo"] = $"{Model.Pagina.TotalItens:N0} equipamento(s) no inventário";
     var podeOperar = User.PodeOperar();
+    var podeCadastrar = User.PodeCadastrar();
 }
 
 <div class="cabecalho-pagina">
@@ -15,7 +16,7 @@
            asp-all-route-data="@Context.Request.Query.ToDictionary(q => q.Key, q => q.Value.ToString())">
             <svg viewBox="0 0 24 24"><use href="#i-download" /></svg> Exportar CSV
         </a>
-        @if (podeOperar)
+        @if (podeCadastrar)
         {
             <a class="btn btn--primario" asp-action="Criar">
                 <svg viewBox="0 0 24 24"><use href="#i-mais" /></svg> Novo ativo
@@ -132,7 +133,7 @@
                     ? "Nenhum equipamento corresponde aos filtros aplicados. Tente ampliar a busca."
                     : "O inventário ainda está vazio. Cadastre o primeiro equipamento de TI.")
             </p>
-            @if (podeOperar)
+            @if (podeCadastrar)
             {
                 <a class="btn btn--primario btn--pequeno" asp-action="Criar">Cadastrar ativo</a>
             }
