@@ -22,12 +22,17 @@ builder.Services.AdicionarInfraestrutura(builder.Configuration);
 builder.Services.AdicionarCamadaDeAplicacao();
 builder.Services.AddScoped<ISelecaoService, SelecaoService>();
 
-builder.Services.AddControllersWithViews(options =>
+var mvc = builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add<TratamentoDeRegraDeNegocioFilter>();
 })
-.AddRazorRuntimeCompilation()
 .AddViewOptions(options => options.HtmlHelperOptions.ClientValidationEnabled = true);
+
+if (builder.Environment.IsDevelopment())
+    mvc.AddRazorRuntimeCompilation();
+
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AppDbContext>("banco-de-dados");
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -113,6 +118,25 @@ else
 app.UseStatusCodePagesWithReExecute("/Erro/{0}");
 app.UseHttpsRedirection();
 
+// Sem APM externo no projeto: isto é o mínimo de instrumentação de performance possível
+// sem adicionar dependência nova — loga só o que foge do normal, para não afogar o log em
+// produção (onde "Microsoft.AspNetCore" fica em Warning e esconde o timing padrão do
+// próprio framework).
+app.Use(async (context, next) =>
+{
+    var cronometro = System.Diagnostics.Stopwatch.StartNew();
+    await next();
+    cronometro.Stop();
+
+    if (cronometro.ElapsedMilliseconds > 1000)
+    {
+        app.Logger.LogWarning(
+            "Requisição lenta: {Metodo} {Caminho} levou {DuracaoMs} ms (status {Status}).",
+            context.Request.Method, context.Request.Path, cronometro.ElapsedMilliseconds,
+            context.Response.StatusCode);
+    }
+});
+
 app.Use(async (context, next) =>
 {
     var headers = context.Response.Headers;
@@ -147,7 +171,14 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Painel}/{action=Index}/{id?}");
 
+app.MapHealthChecks("/health").AllowAnonymous();
+
 // ----------------------------------------------------------------- Inicialização
 await DbInitializer.InicializarAsync(app.Services);
 
 app.Run();
+
+// Marcador público: permite que WebApplicationFactory<Program> (testes de integração
+// da camada Web) enxergue este tipo de fora do assembly — top-level statements geram
+// uma classe Program implicitamente internal.
+public partial class Program;

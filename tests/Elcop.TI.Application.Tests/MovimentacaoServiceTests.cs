@@ -4,6 +4,7 @@ using Elcop.TI.Domain.Common;
 using Elcop.TI.Domain.Entities;
 using Elcop.TI.Domain.Enums;
 using Elcop.TI.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace Elcop.TI.Application.Tests;
 
@@ -80,6 +81,25 @@ public sealed class MovimentacaoServiceTests : IDisposable
 
         await Assert.ThrowsAsync<RegraDeNegocioException>(
             () => movimentacoes.RegistrarEntregaAsync(NovaEntrega(ativoId, colaborador2)));
+    }
+
+    [Fact]
+    public async Task Ativo_AlteradoEmDuasSessoes_RejeitaASegundaGravacao()
+    {
+        await using var preparacao = _factory.Criar();
+        var (ativos, _, _) = CriarServicos(preparacao);
+        var ativoId = await ativos.CriarAsync(NovoAtivo());
+
+        await using var primeiraSessao = _factory.Criar();
+        await using var segundaSessao = _factory.Criar();
+        var primeiro = await primeiraSessao.Ativos.SingleAsync(a => a.Id == ativoId);
+        var segundo = await segundaSessao.Ativos.SingleAsync(a => a.Id == ativoId);
+
+        primeiro.Status = StatusAtivo.Reservado;
+        await primeiraSessao.SaveChangesAsync();
+
+        segundo.Status = StatusAtivo.EmManutencao;
+        await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => segundaSessao.SaveChangesAsync());
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Elcop.TI.Application.Common;
 using Elcop.TI.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Elcop.TI.Infrastructure.Persistence;
 
@@ -35,6 +37,32 @@ public static class DbInitializer
         await CriarPerfisAsync(servicos.GetRequiredService<RoleManager<IdentityRole>>(), ct);
         await CriarAdministradorAsync(
             servicos.GetRequiredService<UserManager<ApplicationUser>>(), config, logger, ambiente);
+
+        AvisarAutoCadastroInseguro(
+            servicos.GetRequiredService<IOptions<ElcopAutoCadastroOptions>>().Value, logger, ambiente);
+    }
+
+    /// <summary>
+    /// Alarme de inicialização: fora de Development, aprovação automática sem restrição de
+    /// domínio dá acesso imediato a qualquer pessoa que abra a tela de login. Isso pode ser
+    /// intencional (rede interna confiável), então não bloqueia a subida — só avisa alto no log,
+    /// do mesmo jeito que a senha legada do administrador.
+    /// </summary>
+    private static void AvisarAutoCadastroInseguro(
+        ElcopAutoCadastroOptions opcoes, ILogger logger, IHostEnvironment ambiente)
+    {
+        if (ambiente.IsDevelopment()) return;
+        if (!opcoes.Habilitado || !opcoes.AprovacaoAutomatica) return;
+
+        if (opcoes.DominiosPermitidos.Length == 0)
+        {
+            logger.LogWarning(
+                "Elcop:AutoCadastro:AprovacaoAutomatica está ativado fora de Development sem " +
+                "Elcop:AutoCadastro:DominiosPermitidos restrito: qualquer pessoa que alcance a tela " +
+                "de login ganha acesso imediato com o perfil {PerfilPadrao}. Restrinja " +
+                "DominiosPermitidos ou desative AprovacaoAutomatica se o sistema for acessível " +
+                "fora de uma rede confiável.", opcoes.PerfilPadrao);
+        }
     }
 
     private static async Task CriarPerfisAsync(RoleManager<IdentityRole> roles, CancellationToken ct)
@@ -48,8 +76,8 @@ public static class DbInitializer
 
     /// <summary>
     /// Cria o administrador inicial na primeira execução. A senha vem da configuração
-    /// (user-secrets ou variável de ambiente <c>Elcop__Admin__Senha</c>); se não houver
-    /// nenhuma, uma senha aleatória é gerada e registrada no log uma única vez.
+    /// (user-secrets ou variável de ambiente <c>Elcop__Admin__Senha</c>). A credencial
+    /// inicial nunca é gerada nem registrada em log, inclusive em Development.
     /// </summary>
     private static async Task CriarAdministradorAsync(
         UserManager<ApplicationUser> users, IConfiguration config, ILogger logger, IHostEnvironment ambiente)
@@ -64,10 +92,9 @@ public static class DbInitializer
 
         var senhaConfigurada = config["Elcop:Admin:Senha"];
 
-        // Fora de Development, gerar e logar uma senha é um risco desnecessário — se o log for
-        // centralizado, a senha fica retida ali indefinidamente. Em produção é melhor falhar
-        // rápido e pedir a senha explicitamente do que criar uma conta cuja senha já vazou pro log.
-        if (string.IsNullOrWhiteSpace(senhaConfigurada) && !ambiente.IsDevelopment())
+        // A ausência da credencial é erro em qualquer ambiente: uma senha de bootstrap não
+        // deve ser exibida nem retida em logs locais ou centralizados.
+        if (string.IsNullOrWhiteSpace(senhaConfigurada))
         {
             throw new InvalidOperationException(
                 "Elcop:Admin:Senha não foi configurada. Defina-a via user-secrets ou a variável de " +
@@ -75,7 +102,7 @@ public static class DbInitializer
                 "fora de Development o administrador inicial não é criado com senha gerada e logada.");
         }
 
-        var senha = string.IsNullOrWhiteSpace(senhaConfigurada) ? GerarSenhaAleatoria() : senhaConfigurada;
+        var senha = senhaConfigurada!;
 
         var admin = new ApplicationUser
         {

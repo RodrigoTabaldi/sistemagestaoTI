@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Configuração da coleta de cobertura (coverlet, via XPlat Code Coverage).
+  Exclui migrations e designers gerados pelo EF Core: são código de infraestrutura
+  gerado por ferramenta, não lógica escrita à mão — contá-los como "não testados"
+  distorceria o percentual de cobertura sem indicar nenhum risco real.
+-->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <Exclude>[*]*.Migrations.*</Exclude>
+          <ExcludeByFile>**/Persistence/Migrations/**/*.cs</ExcludeByFile>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>

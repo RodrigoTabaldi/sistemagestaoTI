@@ -96,5 +96,14 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
                     break;
             }
         }
+
+        foreach (var entrada in ChangeTracker.Entries<Ativo>())
+        {
+            if (entrada.State == EntityState.Added && entrada.Entity.VersaoConcorrencia == Guid.Empty)
+                entrada.Entity.VersaoConcorrencia = Guid.NewGuid();
+
+            if (entrada.State == EntityState.Modified)
+                entrada.Entity.VersaoConcorrencia = Guid.NewGuid();
+        }
     }
 }

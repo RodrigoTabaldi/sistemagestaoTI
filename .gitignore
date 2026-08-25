@@ -4,6 +4,10 @@ obj/
 .vs/
 *.user
 
+# Resultados e cobertura de teste (gerados pelo CI/dotnet test localmente)
+resultados-testes/
+TestResults/
+
 # Banco de dados local (SQLite) — cada instalação tem o seu
 *.db
 *.db-shm

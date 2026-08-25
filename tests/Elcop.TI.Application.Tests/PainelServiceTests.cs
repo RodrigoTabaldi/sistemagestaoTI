@@ -1,6 +1,7 @@
 using Elcop.TI.Application.Services;
 using Elcop.TI.Domain.Entities;
 using Elcop.TI.Domain.Enums;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Elcop.TI.Application.Tests;
 
@@ -10,11 +11,13 @@ public sealed class PainelServiceTests : IDisposable
 
     public void Dispose() => _factory.Dispose();
 
+    private static IMemoryCache NovoCache() => new MemoryCache(new MemoryCacheOptions());
+
     [Fact]
     public async Task ObterAsync_ComBaseVazia_NaoLancaERetornaZerados()
     {
         await using var db = _factory.Criar();
-        var painel = new PainelService(db);
+        var painel = new PainelService(db, NovoCache());
 
         var resultado = await painel.ObterAsync();
 
@@ -45,7 +48,7 @@ public sealed class PainelServiceTests : IDisposable
             Status = StatusAtivo.EmManutencao, ValorAquisicao = 900m
         });
 
-        var painel = new PainelService(db);
+        var painel = new PainelService(db, NovoCache());
         var resultado = await painel.ObterAsync();
 
         Assert.Equal(2, resultado.TotalAtivos);
@@ -69,9 +72,39 @@ public sealed class PainelServiceTests : IDisposable
             Status = StatusAtivo.EmManutencao
         });
 
-        var painel = new PainelService(db);
+        var painel = new PainelService(db, NovoCache());
         var resultado = await painel.ObterAsync();
 
         Assert.Contains(resultado.Alertas, a => a.Titulo.Contains("sem itens disponíveis"));
+    }
+
+    [Fact]
+    public async Task ObterAsync_ChamadasConsecutivas_UsaCacheEmVezDeRecalcular()
+    {
+        await using var db = _factory.Criar();
+        var cache = NovoCache();
+        var usuario = new FakeUsuarioAtual();
+        var ativos = new AtivoService(db, usuario, new AuditoriaService(db, usuario));
+
+        await ativos.CriarAsync(new Ativo
+        {
+            Patrimonio = "TI-000001", Tipo = TipoAtivo.Notebook, Marca = "Dell", Modelo = "Latitude",
+            Status = StatusAtivo.Disponivel
+        });
+
+        var painel = new PainelService(db, cache);
+        var primeira = await painel.ObterAsync();
+
+        // Se o cache não estivesse ativo, este segundo ativo apareceria na próxima leitura.
+        await ativos.CriarAsync(new Ativo
+        {
+            Patrimonio = "TI-000002", Tipo = TipoAtivo.Monitor, Marca = "LG", Modelo = "24\"",
+            Status = StatusAtivo.Disponivel
+        });
+
+        var segunda = await painel.ObterAsync();
+
+        Assert.Same(primeira, segunda);
+        Assert.Equal(1, segunda.TotalAtivos);
     }
 }

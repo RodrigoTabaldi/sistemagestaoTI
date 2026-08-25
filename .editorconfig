@@ -1,0 +1,12 @@
+root = true
+
+[*.cs]
+charset = utf-8-bom
+indent_style = space
+indent_size = 4
+end_of_line = crlf
+insert_final_newline = true
+
+dotnet_diagnostic.CA2007.severity = suggestion
+dotnet_diagnostic.CA2016.severity = warning
+dotnet_diagnostic.CA2208.severity = warning

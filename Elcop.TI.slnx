@@ -7,5 +7,6 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Elcop.TI.Application.Tests/Elcop.TI.Application.Tests.csproj" />
+    <Project Path="tests/Elcop.TI.Web.Tests/Elcop.TI.Web.Tests.csproj" />
   </Folder>
 </Solution>

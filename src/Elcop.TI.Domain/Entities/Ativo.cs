@@ -11,6 +11,10 @@ namespace Elcop.TI.Domain.Entities;
 /// </summary>
 public class Ativo : EntidadeBase
 {
+    /// <summary>
+    /// Token de concorrência otimista para impedir sobrescrita silenciosa da posse.
+    /// </summary>
+    public Guid VersaoConcorrencia { get; set; } = Guid.NewGuid();
     // ---------- Identificação ----------
 
     [Required(ErrorMessage = "Informe o número de patrimônio.")]

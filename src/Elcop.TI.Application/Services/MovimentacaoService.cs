@@ -154,7 +154,7 @@ public class MovimentacaoService : IMovimentacaoService
             $"{model.Tipo.ObterNome()}: ativo {ativo.Patrimonio} ({ativo.DescricaoCurta}) " +
             $"entregue a {colaborador.NomeCompleto}.", ct);
 
-        await _db.SaveChangesAsync(ct);
+        await SalvarAlteracoesDoAtivoAsync(ct);
         return movimentacao.Id;
     }
 
@@ -198,7 +198,7 @@ public class MovimentacaoService : IMovimentacaoService
             $"{movimentacao.Colaborador?.NomeCompleto} (termo {movimentacao.Protocolo})" +
             (model.ComAvaria ? " — devolvido com avaria." : "."), ct);
 
-        await _db.SaveChangesAsync(ct);
+        await SalvarAlteracoesDoAtivoAsync(ct);
     }
 
     public async Task<int> TransferirAsync(
@@ -244,6 +244,19 @@ public class MovimentacaoService : IMovimentacaoService
 
         await transacao.CommitAsync(ct);
         return novaMovimentacaoId;
+    }
+
+    private async Task SalvarAlteracoesDoAtivoAsync(CancellationToken ct)
+    {
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            throw new RegraDeNegocioException(
+                "O ativo foi alterado por outra operação. Atualize a página e tente novamente.");
+        }
     }
 
     public async Task CancelarAsync(int id, string motivo, CancellationToken ct = default)

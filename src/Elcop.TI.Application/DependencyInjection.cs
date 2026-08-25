@@ -11,6 +11,10 @@ public static class DependencyInjection
 {
     public static IServiceCollection AdicionarCamadaDeAplicacao(this IServiceCollection services)
     {
+        // Cache em memória do processo — hoje só o PainelService o usa, para não repetir
+        // ~15 consultas de agregação a cada acesso à tela inicial.
+        services.AddMemoryCache();
+
         services.AddScoped<IAuditoriaService, AuditoriaService>();
         services.AddScoped<IAtivoService, AtivoService>();
         services.AddScoped<IColaboradorService, ColaboradorService>();

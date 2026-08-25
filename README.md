@@ -1,7 +1,7 @@
 ﻿# ELCOP · Gestão de TI
 
 Sistema web para **controle de estoque/inventário de ativos de TI** e **gestão de demandas**,
-construído em ASP.NET Core 8 (MVC) com EF Core, arquitetura em camadas e front-end próprio.
+construído em ASP.NET Core 10 (MVC) com EF Core, arquitetura em camadas e front-end próprio.
 
 ---
 
@@ -17,12 +17,16 @@ Cole o endereço  ex : `https://localhost:5001` no navegador. A primeira execuç
 ## Arquitetura
 
 ```
-Elcop.TI.sln
-└── src
-    ├── Elcop.TI.Domain          Entidades, enums e regras de negócio puras (sem dependências)
-    ├── Elcop.TI.Application     Contratos, DTOs, filtros e serviços de aplicação
-    ├── Elcop.TI.Infrastructure  EF Core, Identity, Firebase, armazenamento, seed, migrations
-    └── Elcop.TI.Web             MVC: controllers, views Razor, design system, wwwroot
+Elcop.TI.slnx
+├── src
+│   ├── Elcop.TI.Domain          Entidades, enums e regras de negócio puras (sem dependências)
+│   ├── Elcop.TI.Application     Contratos, DTOs, filtros e serviços de aplicação
+│   ├── Elcop.TI.Infrastructure  EF Core, Identity, Firebase, armazenamento, seed, migrations
+│   └── Elcop.TI.Web             MVC: controllers, views Razor, design system, wwwroot
+└── tests
+    ├── Elcop.TI.Application.Tests  Testes unitários dos serviços de aplicação (xUnit + SQLite em memória)
+    └── Elcop.TI.Web.Tests           Testes de integração via WebApplicationFactory: autorização por
+                                      perfil e a defesa contra POST forjado em Demandas/Criar
 ```
 
 **Fluxo de dependência:** `Web → Infrastructure → Application → Domain`.
@@ -41,6 +45,11 @@ serviços permanecem testáveis.
   desligar colaborador com equipamento). Um *exception filter* converte em toast, sem página de erro.
 - **Trilha de auditoria** gravada na mesma transação da operação auditada.
 - **Carimbo de criação/alteração** aplicado no `SaveChanges` como rede de segurança.
+- **Painel inicial em cache curto** (30s, em memória): a tela mais visitada do sistema não
+  recalcula ~15 agregações a cada acesso; o dado tolera alguns segundos de atraso.
+- **Autocadastro nasce desabilitado por padrão** (`AprovacaoAutomatica: false`): mesmo com o
+  link de cadastro ativo, a conta só entra depois que um administrador libera em Usuários —
+  ligar aprovação automática é uma escolha explícita, não o padrão de fábrica.
 
 ---
 
@@ -134,11 +143,23 @@ Design system próprio, sem frameworks CSS, derivado da identidade ELCOP
 Migrations são específicas do provedor. Sqlite e SQL Server compartilham o conjunto em
 `Persistence/Migrations`; o PostgreSQL tem o seu próprio em `Persistence/Migrations/Postgres`,
 usado através do contexto `AppDbContextPostgres`. Os dois convivem — não é preciso apagar nada
-para alternar.
+para alternar, mas **os dois precisam ser regerados juntos** a cada mudança de modelo — o CI
+falha (`dotnet ef migrations has-pending-model-changes`) se qualquer um dos dois ficar
+desatualizado em relação às entidades, então um esquecimento não passa despercebido.
 
-Para regerar o conjunto do Postgres depois de mudar o modelo:
+`dotnet-ef` é uma ferramenta local do repositório (`dotnet-tools.json`), não uma instalação
+global — restaure com `dotnet tool restore` antes do primeiro uso.
+
+Depois de mudar o modelo, regere as duas migrations:
 
 ```bash
+dotnet tool restore
+
+dotnet ef migrations add NomeDaMigration ^
+  --project src\Elcop.TI.Infrastructure ^
+  --startup-project src\Elcop.TI.Web ^
+  --context AppDbContext
+
 dotnet ef migrations add NomeDaMigration ^
   --project src\Elcop.TI.Infrastructure ^
   --startup-project src\Elcop.TI.Web ^

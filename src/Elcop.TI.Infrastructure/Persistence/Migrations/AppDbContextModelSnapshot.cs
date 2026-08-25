@@ -159,6 +159,10 @@ namespace Elcop.TI.Infrastructure.Persistence.Migrations
                     b.Property<decimal?>("ValorAquisicao")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<Guid>("VersaoConcorrencia")
+                        .IsConcurrencyToken()
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ColaboradorAtualId");

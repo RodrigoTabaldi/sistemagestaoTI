@@ -15,19 +15,38 @@ jobs:
       - name: Baixar código
         uses: actions/checkout@v4
 
-      - name: Instalar .NET 8
+      - name: Instalar .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x"
+          dotnet-version: "10.0.x"
 
       - name: Restaurar dependências
-        run: dotnet restore Elcop.TI.slnx
+        run: dotnet restore Elcop.TI.slnx --locked-mode
+
+      - name: Restaurar ferramentas locais (dotnet-ef)
+        run: dotnet tool restore
 
       - name: Build (sem warnings tolerados)
         run: dotnet build Elcop.TI.slnx --no-restore --configuration Release /warnaserror
 
-      - name: Testes
-        run: dotnet test Elcop.TI.slnx --no-build --configuration Release --logger "trx" --results-directory ./resultados-testes
+      - name: Verificar migrations em dia (AppDbContext)
+        run: >
+          dotnet ef migrations has-pending-model-changes
+          --project src/Elcop.TI.Infrastructure --startup-project src/Elcop.TI.Web
+          --context AppDbContext --no-build --configuration Release
+
+      - name: Verificar migrations em dia (AppDbContextPostgres)
+        run: >
+          dotnet ef migrations has-pending-model-changes
+          --project src/Elcop.TI.Infrastructure --startup-project src/Elcop.TI.Web
+          --context AppDbContextPostgres --no-build --configuration Release
+
+      - name: Testes (com cobertura)
+        run: >
+          dotnet test Elcop.TI.slnx --no-build --configuration Release
+          --logger "trx" --results-directory ./resultados-testes
+          --collect:"XPlat Code Coverage"
+          --settings coverlet.runsettings
 
       - name: Publicar resultados dos testes
         if: always()
@@ -35,3 +54,10 @@ jobs:
         with:
           name: resultados-testes
           path: resultados-testes
+
+      - name: Publicar cobertura de testes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-testes
+          path: resultados-testes/**/coverage.cobertura.xml

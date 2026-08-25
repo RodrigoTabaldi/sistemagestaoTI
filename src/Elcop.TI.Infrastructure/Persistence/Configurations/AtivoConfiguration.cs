@@ -19,6 +19,7 @@ public class AtivoConfiguration : IEntityTypeConfiguration<Ativo>
         builder.Property(a => a.Imei).HasMaxLength(20);
         builder.Property(a => a.Imei2).HasMaxLength(20);
         builder.Property(a => a.ValorAquisicao).HasColumnType("decimal(18,2)");
+        builder.Property(a => a.VersaoConcorrencia).IsConcurrencyToken();
 
         // O patrimônio é o identificador operacional do equipamento: precisa ser único
         // mesmo entre registros excluídos logicamente, para não reciclar números.

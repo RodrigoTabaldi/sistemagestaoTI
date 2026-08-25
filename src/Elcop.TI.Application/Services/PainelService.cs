@@ -3,6 +3,7 @@ using Elcop.TI.Application.Models;
 using Elcop.TI.Domain.Common;
 using Elcop.TI.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Elcop.TI.Application.Services;
 
@@ -45,11 +46,30 @@ public class PainelService : IPainelService
             [PrioridadeDemanda.Critica] = "#8B1F26"
         };
 
+    /// <summary>
+    /// O painel é o mesmo para todo mundo (não depende do usuário logado) e tolera alguns
+    /// segundos de atraso nos números — um TTL curto evita recalcular ~15 agregações a cada
+    /// acesso à tela inicial sem arriscar dado visivelmente desatualizado.
+    /// </summary>
+    private static readonly TimeSpan DuracaoCache = TimeSpan.FromSeconds(30);
+
+    private const string ChaveCache = "painel:resumo";
+
     private readonly IAppDbContext _db;
+    private readonly IMemoryCache _cache;
 
-    public PainelService(IAppDbContext db) => _db = db;
+    public PainelService(IAppDbContext db, IMemoryCache cache)
+    {
+        _db = db;
+        _cache = cache;
+    }
 
-    public async Task<PainelModel> ObterAsync(CancellationToken ct = default)
+    public Task<PainelModel> ObterAsync(CancellationToken ct = default) =>
+        _cache.TryGetValue(ChaveCache, out PainelModel? emCache) && emCache is not null
+            ? Task.FromResult(emCache)
+            : MontarAsync(ct);
+
+    private async Task<PainelModel> MontarAsync(CancellationToken ct)
     {
         var hoje = DateTime.Today;
         var inicioMes = new DateTime(hoje.Year, hoje.Month, 1);
@@ -233,6 +253,7 @@ public class PainelService : IPainelService
 
         painel.Alertas = MontarAlertas(painel);
 
+        _cache.Set(ChaveCache, painel, DuracaoCache);
         return painel;
     }
 

@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Elcop.TI.Web.Tests": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:57053;http://localhost:57054"
+    }
+  }
+}
