@@ -31,11 +31,11 @@ public sealed class AutorizacaoTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Anonimo_VerificandoHealthCheck_RecebeSucesso()
+    public async Task Anonimo_VerificandoLiveness_RecebeSucesso()
     {
         var client = _factory.CriarClienteAnonimo();
 
-        var resposta = await client.GetAsync("/health");
+        var resposta = await client.GetAsync("/health/live");
 
         Assert.Equal(HttpStatusCode.OK, resposta.StatusCode);
     }

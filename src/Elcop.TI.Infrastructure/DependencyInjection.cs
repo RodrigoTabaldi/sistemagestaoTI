@@ -19,7 +19,7 @@ namespace Elcop.TI.Infrastructure;
 public static class DependencyInjection
 {
     public static IServiceCollection AdicionarInfraestrutura(
-        this IServiceCollection services, IConfiguration configuration)
+        this IServiceCollection services, IConfiguration configuration, bool habilitarErrosDetalhados = false)
     {
         var provedor = configuration["Elcop:Provedor"] ?? "Sqlite";
         var conexao = configuration.GetConnectionString("Padrao")
@@ -40,7 +40,8 @@ public static class DependencyInjection
                     npg.EnableRetryOnFailure(3);
                 });
 
-                options.EnableDetailedErrors();
+                if (habilitarErrosDetalhados)
+                    options.EnableDetailedErrors();
             });
 
             services.AddScoped<AppDbContext>(sp => sp.GetRequiredService<AppDbContextPostgres>());
@@ -63,7 +64,8 @@ public static class DependencyInjection
                         sqlite.MigrationsAssembly(assemblyMigrations));
                 }
 
-                options.EnableDetailedErrors();
+                if (habilitarErrosDetalhados)
+                    options.EnableDetailedErrors();
             });
         }
 

@@ -31,37 +31,43 @@ public static class DbInitializer
         var config = servicos.GetRequiredService<IConfiguration>();
         var ambiente = servicos.GetRequiredService<IHostEnvironment>();
 
-        await db.Database.MigrateAsync(ct);
-        logger.LogInformation("Banco de dados atualizado.");
+        // Em produção, migrations são uma etapa única do deploy. Executá-las a cada
+        // réplica pode criar disputa no banco e atrasar o readiness do serviço.
+        var aplicarMigrations = config.GetValue<bool?>("Elcop:AplicarMigrationsNoStartup")
+            ?? ambiente.IsDevelopment();
+
+        if (aplicarMigrations)
+        {
+            await db.Database.MigrateAsync(ct);
+            logger.LogInformation("Banco de dados atualizado.");
+        }
+        else
+        {
+            logger.LogInformation("Migrations no startup desabilitadas; o deploy deve aplicá-las antes de iniciar a aplicação.");
+        }
 
         await CriarPerfisAsync(servicos.GetRequiredService<RoleManager<IdentityRole>>(), ct);
         await CriarAdministradorAsync(
             servicos.GetRequiredService<UserManager<ApplicationUser>>(), config, logger, ambiente);
 
-        AvisarAutoCadastroInseguro(
-            servicos.GetRequiredService<IOptions<ElcopAutoCadastroOptions>>().Value, logger, ambiente);
+        ValidarConfiguracaoDeProducao(
+            servicos.GetRequiredService<IOptions<ElcopAutoCadastroOptions>>().Value, ambiente);
     }
 
     /// <summary>
-    /// Alarme de inicialização: fora de Development, aprovação automática sem restrição de
-    /// domínio dá acesso imediato a qualquer pessoa que abra a tela de login. Isso pode ser
-    /// intencional (rede interna confiável), então não bloqueia a subida — só avisa alto no log,
-    /// do mesmo jeito que a senha legada do administrador.
+    /// Em produção, autocadastro é permitido somente para domínios explicitamente confiáveis.
+    /// Falhar cedo evita que um override de configuração abra a criação de contas por engano.
     /// </summary>
-    private static void AvisarAutoCadastroInseguro(
-        ElcopAutoCadastroOptions opcoes, ILogger logger, IHostEnvironment ambiente)
+    private static void ValidarConfiguracaoDeProducao(
+        ElcopAutoCadastroOptions opcoes, IHostEnvironment ambiente)
     {
-        if (ambiente.IsDevelopment()) return;
-        if (!opcoes.Habilitado || !opcoes.AprovacaoAutomatica) return;
+        if (ambiente.IsDevelopment() || !opcoes.Habilitado) return;
 
         if (opcoes.DominiosPermitidos.Length == 0)
         {
-            logger.LogWarning(
-                "Elcop:AutoCadastro:AprovacaoAutomatica está ativado fora de Development sem " +
-                "Elcop:AutoCadastro:DominiosPermitidos restrito: qualquer pessoa que alcance a tela " +
-                "de login ganha acesso imediato com o perfil {PerfilPadrao}. Restrinja " +
-                "DominiosPermitidos ou desative AprovacaoAutomatica se o sistema for acessível " +
-                "fora de uma rede confiável.", opcoes.PerfilPadrao);
+            throw new InvalidOperationException(
+                "Elcop:AutoCadastro:Habilitado exige Elcop:AutoCadastro:DominiosPermitidos preenchido fora de Development. " +
+                "Desabilite o autocadastro ou permita explicitamente os domínios corporativos.");
         }
     }
 

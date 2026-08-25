@@ -48,6 +48,19 @@ jobs:
           --collect:"XPlat Code Coverage"
           --settings coverlet.runsettings
 
+      - name: Validar limiar mínimo de cobertura
+        shell: pwsh
+        run: ./scripts/validar-cobertura.ps1 -DiretorioResultados ./resultados-testes -MinimoLinha 75 -MinimoRamo 65
+
+      - name: Auditoria de dependências vulneráveis
+        run: >
+          dotnet package list Elcop.TI.slnx --vulnerable --include-transitive
+          --format json --output-version 1 > vulnerabilidades-dependencias.json
+
+      - name: Bloquear vulnerabilidades altas ou críticas
+        shell: pwsh
+        run: ./scripts/validar-vulnerabilidades.ps1 -Relatorio ./vulnerabilidades-dependencias.json
+
       - name: Publicar resultados dos testes
         if: always()
         uses: actions/upload-artifact@v4
@@ -61,3 +74,10 @@ jobs:
         with:
           name: cobertura-testes
           path: resultados-testes/**/coverage.cobertura.xml
+
+      - name: Publicar auditoria de dependências
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulnerabilidades-dependencias
+          path: vulnerabilidades-dependencias.json

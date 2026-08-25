@@ -13,12 +13,23 @@ using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (!builder.Environment.IsDevelopment())
+{
+    var hostsPermitidos = builder.Configuration["AllowedHosts"];
+    if (string.IsNullOrWhiteSpace(hostsPermitidos) || hostsPermitidos.Split(';').Any(h => h.Trim() == "*"))
+    {
+        throw new InvalidOperationException(
+            "AllowedHosts deve listar hosts explícitos fora de Development; não use '*'.");
+    }
+}
+
 // ----------------------------------------------------------------- Serviços
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IUsuarioAtual, UsuarioAtual>();
 
-builder.Services.AdicionarInfraestrutura(builder.Configuration);
+builder.Services.AdicionarInfraestrutura(
+    builder.Configuration, habilitarErrosDetalhados: builder.Environment.IsDevelopment());
 builder.Services.AdicionarCamadaDeAplicacao();
 builder.Services.AddScoped<ISelecaoService, SelecaoService>();
 
@@ -125,15 +136,23 @@ app.UseHttpsRedirection();
 app.Use(async (context, next) =>
 {
     var cronometro = System.Diagnostics.Stopwatch.StartNew();
-    await next();
-    cronometro.Stop();
-
-    if (cronometro.ElapsedMilliseconds > 1000)
+    try
     {
-        app.Logger.LogWarning(
-            "Requisição lenta: {Metodo} {Caminho} levou {DuracaoMs} ms (status {Status}).",
-            context.Request.Method, context.Request.Path, cronometro.ElapsedMilliseconds,
-            context.Response.StatusCode);
+        await next();
+    }
+    finally
+    {
+        cronometro.Stop();
+        TelemetriaAplicacao.RegistrarRequisicao(
+            context.Request.Method, context.Response.StatusCode, cronometro.Elapsed);
+
+        if (cronometro.ElapsedMilliseconds > 1000)
+        {
+            app.Logger.LogWarning(
+                "Requisição lenta: {Metodo} {Caminho} levou {DuracaoMs} ms (status {Status}).",
+                context.Request.Method, context.Request.Path, cronometro.ElapsedMilliseconds,
+                context.Response.StatusCode);
+        }
     }
 });
 
@@ -171,7 +190,16 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Painel}/{action=Index}/{id?}");
 
-app.MapHealthChecks("/health").AllowAnonymous();
+app.MapHealthChecks("/health/live", new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+{
+    Predicate = _ => false
+}).AllowAnonymous();
+
+var readiness = app.MapHealthChecks("/health/ready");
+if (app.Environment.IsDevelopment())
+    readiness.AllowAnonymous();
+else
+    readiness.RequireAuthorization(Politicas.Administrar);
 
 // ----------------------------------------------------------------- Inicialização
 await DbInitializer.InicializarAsync(app.Services);
