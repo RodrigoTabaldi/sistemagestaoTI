@@ -63,21 +63,21 @@ jobs:
 
       - name: Publicar resultados dos testes
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: resultados-testes
           path: resultados-testes
 
       - name: Publicar cobertura de testes
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cobertura-testes
           path: resultados-testes/**/coverage.cobertura.xml
 
       - name: Publicar auditoria de dependências
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vulnerabilidades-dependencias
           path: vulnerabilidades-dependencias.json
