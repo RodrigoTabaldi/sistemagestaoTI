@@ -1,0 +1,110 @@
+{
+  "scanned_path": "C:\\Users\\rodri\\source\\repos\\sistemagestaoTI",
+  "repo_name": "sistemagestaoTI",
+  "walk": {
+    "file_count": 3885,
+    "loc_by_extension": {
+      ".py": 1353031,
+      ".h": 327950,
+      ".cs": 17028,
+      ".json": 5704,
+      ".html": 1732,
+      ".c": 1632,
+      ".css": 1344,
+      ".js": 1324,
+      ".sh": 404
+    },
+    "files_by_extension": {
+      ".py": 2923,
+      ".h": 798,
+      ".cs": 124,
+      ".json": 24,
+      ".js": 5,
+      ".sh": 4,
+      ".css": 3,
+      ".html": 2,
+      ".c": 2
+    },
+    "total_loc": 1710149,
+    "todo_count": 302,
+    "fixme_count": 209,
+    "manifests_found": [
+      "src\\Elcop.TI.Application\\Elcop.TI.Application.csproj",
+      "src\\Elcop.TI.Domain\\Elcop.TI.Domain.csproj",
+      "src\\Elcop.TI.Infrastructure\\Elcop.TI.Infrastructure.csproj",
+      "src\\Elcop.TI.Web\\Elcop.TI.Web.csproj",
+      "tests\\Elcop.TI.Application.Tests\\Elcop.TI.Application.Tests.csproj",
+      "tests\\Elcop.TI.Web.Tests\\Elcop.TI.Web.Tests.csproj"
+    ],
+    "lockfiles_found": [],
+    "lint_configs_found": [],
+    "test_dirs_found": [
+      "tests"
+    ],
+    "largest_files_top10": [
+      [
+        "tmp\\audit-uv-cache\\archive-v0\\80KEbnkzp4gnMmjY\\pymupdf\\__init__.py",
+        26094
+      ],
+      [
+        "tmp\\audit-uv-cache\\archive-v0\\RPz914ePEyd3W1qR\\Lib\\site-packages\\pymupdf\\__init__.py",
+        26094
+      ],
+      [
+        "tmp\\audit-uv-cache\\archive-v0\\zcrR0o6AujMrLTJO\\Lib\\site-packages\\pymupdf\\__init__.py",
+        26094
+      ],
+      [
+        "tmp\\audit-uv-cache\\archive-v0\\80KEbnkzp4gnMmjY\\pymupdf\\mupdf-devel\\include\\mupdf\\classes.h",
+        21776
+      ],
+      [
+        "tmp\\audit-uv-cache\\archive-v0\\RPz914ePEyd3W1qR\\Lib\\site-packages\\pymupdf\\mupdf-devel\\include\\mupdf\\classes.h",
+        21776
+      ],
+      [
+        "tmp\\audit-uv-cache\\archive-v0\\zcrR0o6AujMrLTJO\\Lib\\site-packages\\pymupdf\\mupdf-devel\\include\\mupdf\\classes.h",
+        21776
+      ],
+      [
+        "tmp\\audit-python\\cpython-3.13-windows-x86_64-none\\Lib\\site-packages\\pip\\_vendor\\idna\\uts46data.py",
+        16897
+      ],
+      [
+        "tmp\\audit-python\\cpython-3.13.15-windows-x86_64-none\\Lib\\site-packages\\pip\\_vendor\\idna\\uts46data.py",
+        16897
+      ],
+      [
+        "tmp\\audit-uv-cache\\archive-v0\\80KEbnkzp4gnMmjY\\pymupdf\\mupdf-devel\\include\\mupdf\\functions.h",
+        14833
+      ],
+      [
+        "tmp\\audit-uv-cache\\archive-v0\\RPz914ePEyd3W1qR\\Lib\\site-packages\\pymupdf\\mupdf-devel\\include\\mupdf\\functions.h",
+        14833
+      ]
+    ]
+  },
+  "git": {
+    "is_git_repo": true,
+    "commit_count": "9",
+    "last_commit_date": "2026-08-26 15:50:45 -0400",
+    "first_commit_date": "2026-08-12 14:24:48 -0400",
+    "contributor_count": 1,
+    "top_contributors": [
+      "13\tRodrigo Tabaldi"
+    ],
+    "current_branch": "main"
+  },
+  "infra": {
+    "has_github_actions": true,
+    "has_gitlab_ci": false,
+    "has_circleci": false,
+    "has_dockerfile": false,
+    "has_docker_compose": false,
+    "has_readme": true,
+    "has_license": true,
+    "has_gitignore": true,
+    "has_env_example": false,
+    "has_dotenv_committed": false
+  }
+}
