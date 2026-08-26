@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "parameters": "--vulnerable --include-transitive",
+  "sources": [
+    "https://api.nuget.org/v3/index.json",
+    "C:/Program Files (x86)/Microsoft SDKs/NuGetPackages/"
+  ],
+  "projects": [
+    {
+      "path": "C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Application/Elcop.TI.Application.csproj"
+    },
+    {
+      "path": "C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Domain/Elcop.TI.Domain.csproj"
+    },
+    {
+      "path": "C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Infrastructure/Elcop.TI.Infrastructure.csproj"
+    },
+    {
+      "path": "C:/Users/rodri/source/repos/sistemagestaoTI/src/Elcop.TI.Web/Elcop.TI.Web.csproj"
+    },
+    {
+      "path": "C:/Users/rodri/source/repos/sistemagestaoTI/tests/Elcop.TI.Application.Tests/Elcop.TI.Application.Tests.csproj"
+    },
+    {
+      "path": "C:/Users/rodri/source/repos/sistemagestaoTI/tests/Elcop.TI.Web.Tests/Elcop.TI.Web.Tests.csproj"
+    }
+  ]
+}
