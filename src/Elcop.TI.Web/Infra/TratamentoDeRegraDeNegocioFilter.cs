@@ -41,10 +41,11 @@ public class TratamentoDeRegraDeNegocioFilter : IExceptionFilter
         var tempData = _tempDataFactory.GetTempData(context.HttpContext);
         tempData[Notificacao.ChaveErro] = excecao.Message;
 
-        // Volta para a tela de origem quando possível; caso contrário, para a listagem.
-        var retorno = context.HttpContext.Request.Headers.Referer.ToString();
+        // Volta para a tela de origem quando possível, mas o Referer vem do cliente:
+        // aceite apenas caminhos locais ou URLs absolutas da mesma origem.
+        var retorno = ObterRetornoSeguro(context.HttpContext.Request);
 
-        context.Result = !string.IsNullOrWhiteSpace(retorno) && Uri.IsWellFormedUriString(retorno, UriKind.Absolute)
+        context.Result = !string.IsNullOrWhiteSpace(retorno)
             ? new RedirectResult(retorno)
             : new RedirectToActionResult(
                 "Index",
@@ -57,4 +58,27 @@ public class TratamentoDeRegraDeNegocioFilter : IExceptionFilter
     private static bool EhRequisicaoAjax(HttpRequest request) =>
         request.Headers.XRequestedWith == "XMLHttpRequest"
         || request.Headers.Accept.ToString().Contains("application/json", StringComparison.OrdinalIgnoreCase);
+
+    private static string? ObterRetornoSeguro(HttpRequest request)
+    {
+        var retorno = request.Headers.Referer.ToString();
+        if (string.IsNullOrWhiteSpace(retorno)) return null;
+
+        if (EhUrlLocal(retorno)) return retorno;
+
+        if (!Uri.TryCreate(retorno, UriKind.Absolute, out var uri)) return null;
+
+        var mesmaOrigem =
+            string.Equals(uri.Scheme, request.Scheme, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(uri.Authority, request.Host.Value, StringComparison.OrdinalIgnoreCase);
+
+        var caminhoLocal = uri.PathAndQuery + uri.Fragment;
+        return mesmaOrigem && EhUrlLocal(caminhoLocal) ? caminhoLocal : null;
+    }
+
+    private static bool EhUrlLocal(string url) =>
+        url.Length > 0
+        && url[0] == '/'
+        && (url.Length == 1 || (url[1] != '/' && url[1] != '\\'))
+        && !url.StartsWith("/\\", StringComparison.Ordinal);
 }
