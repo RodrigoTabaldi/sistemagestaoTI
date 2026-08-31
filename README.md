@@ -180,6 +180,11 @@ O sistema é relacional (EF Core + ASP.NET Identity). O **Firestore não substit
 | Login | **Firebase Authentication** | `Elcop:Firebase:Habilitado = true` |
 | Fotos e anexos | **Firebase Cloud Storage** | `Elcop:Armazenamento = "Firebase"` |
 
+Para publicar este ASP.NET Core no ecossistema Firebase, use **Firebase Hosting + Cloud Run**:
+o container roda no Cloud Run e o Hosting fornece domínio, SSL e CDN com rewrite para o serviço.
+Os arquivos de deploy estão em `Dockerfile`, `cloudbuild.yaml` e `firebase.json`; o passo a passo
+está em `docs/FIREBASE_DEPLOY.md`.
+
 ### 1. Banco no Cloud SQL
 
 ```jsonc

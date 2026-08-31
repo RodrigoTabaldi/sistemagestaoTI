@@ -7,6 +7,8 @@ using Elcop.TI.Infrastructure.Identity;
 using Elcop.TI.Infrastructure.Persistence;
 using Elcop.TI.Web.Infra;
 using Elcop.TI.Web.Services;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.AspNetCore.RateLimiting;
@@ -16,10 +18,13 @@ var builder = WebApplication.CreateBuilder(args);
 if (!builder.Environment.IsDevelopment())
 {
     var hostsPermitidos = builder.Configuration["AllowedHosts"];
-    if (string.IsNullOrWhiteSpace(hostsPermitidos) || hostsPermitidos.Split(';').Any(h => h.Trim() == "*"))
+    if (string.IsNullOrWhiteSpace(hostsPermitidos)
+        || hostsPermitidos.Split(';').Any(h =>
+            h.Trim() == "*"
+            || h.Trim().Equals("localhost", StringComparison.OrdinalIgnoreCase)))
     {
         throw new InvalidOperationException(
-            "AllowedHosts deve listar hosts explícitos fora de Development; não use '*'.");
+            "AllowedHosts deve listar os hosts públicos reais fora de Development; não use '*', vazio ou apenas localhost.");
     }
 }
 
@@ -30,6 +35,9 @@ builder.Services.AddScoped<IUsuarioAtual, UsuarioAtual>();
 
 builder.Services.AdicionarInfraestrutura(
     builder.Configuration, habilitarErrosDetalhados: builder.Environment.IsDevelopment());
+builder.Services.AddDataProtection()
+    .SetApplicationName("Elcop.TI")
+    .PersistKeysToDbContext<AppDbContext>();
 builder.Services.AdicionarCamadaDeAplicacao();
 builder.Services.AddScoped<ISelecaoService, SelecaoService>();
 
@@ -98,6 +106,19 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+        | ForwardedHeaders.XForwardedHost
+        | ForwardedHeaders.XForwardedProto;
+
+    // Firebase Hosting/Cloud Run encerram TLS antes do ASP.NET Core. Sem os headers
+    // encaminhados, o app trata a requisição como HTTP interno e pode gerar redirects
+    // ou cookies incorretos.
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 builder.Services.AddRequestLocalization(options =>
 {
     var ptBr = new CultureInfo("pt-BR");
@@ -118,6 +139,7 @@ var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
+    app.UseForwardedHeaders();
     app.UseExceptionHandler("/Erro");
     app.UseHsts();
 }

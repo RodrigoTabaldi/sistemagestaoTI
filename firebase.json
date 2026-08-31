@@ -1,0 +1,20 @@
+{
+  "hosting": {
+    "public": "firebase-hosting",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": {
+          "serviceId": "elcop-ti-web",
+          "region": "southamerica-east1",
+          "pinTag": true
+        }
+      }
+    ]
+  }
+}

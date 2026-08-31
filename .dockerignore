@@ -1,0 +1,14 @@
+**/.git
+**/.vs
+**/bin
+**/obj
+**/TestResults
+**/resultados-testes
+tmp
+output
+*.db
+*.db-shm
+*.db-wal
+*.user
+*.suo
+firebase-hosting/.firebase

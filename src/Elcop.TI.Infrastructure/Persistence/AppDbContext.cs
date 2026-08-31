@@ -3,6 +3,7 @@ using Elcop.TI.Application.Common;
 using Elcop.TI.Domain.Common;
 using Elcop.TI.Domain.Entities;
 using Elcop.TI.Infrastructure.Identity;
+using Microsoft.AspNetCore.DataProtection.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,7 +12,7 @@ namespace Elcop.TI.Infrastructure.Persistence;
 /// <summary>
 /// Contexto único da aplicação: dados de negócio + tabelas do ASP.NET Identity.
 /// </summary>
-public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
+public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext, IDataProtectionKeyContext
 {
     private readonly IUsuarioAtual? _usuarioAtual;
 
@@ -42,6 +43,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
     public DbSet<Demanda> Demandas => Set<Demanda>();
     public DbSet<DemandaAndamento> DemandaAndamentos => Set<DemandaAndamento>();
     public DbSet<RegistroAuditoria> RegistrosAuditoria => Set<RegistroAuditoria>();
+    public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -57,6 +59,7 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>, IAppDbContext
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserLogin<string>>().ToTable("UsuarioLogins");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityUserToken<string>>().ToTable("UsuarioTokens");
         builder.Entity<Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>>().ToTable("PerfilClaims");
+        builder.Entity<DataProtectionKey>().ToTable("DataProtectionKeys");
     }
 
     public override int SaveChanges()
